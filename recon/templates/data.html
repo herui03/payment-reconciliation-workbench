@@ -1,0 +1,24 @@
+{% extends "base.html" %}{% from "_macros.html" import status_pill %}
+{% block title %}Data quality · Reconciliation Workbench{% endblock %}
+{% block body %}
+<h1>Data quality</h1>
+<div class="card">
+  <h2>Imports <small>rows read = loaded + duplicate + quarantined</small></h2>
+  <table>
+    <tr><th>#</th><th>Source</th><th>File</th><th>SHA-256</th><th>When (UTC)</th><th>Actor</th><th>Status</th><th class="num">Read</th><th class="num">Loaded</th><th class="num">Dup</th><th class="num">Quarantined</th><th>Loaded control totals</th><th>Message</th></tr>
+    {% for i in imports %}<tr><td>{{ i.import_id }}</td><td>{{ i.source }}</td><td>{{ i.file_name }}</td><td class="mono">{{ i.sha256[:12] }}</td><td class="small">{{ i.imported_at }}</td><td>{{ i.actor }}</td><td>{{ status_pill(i.status) }}</td>
+      <td class="num">{{ i.rows_read }}</td><td class="num">{{ i.rows_loaded }}</td><td class="num">{{ i.rows_duplicate }}</td><td class="num">{{ i.rows_quarantined }}</td>
+      <td class="small">{% for cur, t in (i.loaded_totals_json|fromjson)|dictsort %}{{ cur }} {{ t.rows }} rows / {{ t.amount_minor|money(cur) }}{% if not loop.last %}<br>{% endif %}{% endfor %}</td>
+      <td class="small">{{ i.message }}</td></tr>{% endfor %}
+  </table>
+  <p class="small muted">Control totals: ledger = gross, PSP = net, bank = amount, over loaded rows only.</p>
+</div>
+<div class="card" style="margin-top:14px">
+  <h2>Row issues ({{ issues|length }})</h2>
+  <table id="row-issues">
+    <tr><th>Kind</th><th>Source</th><th>File</th><th class="num">Row</th><th>Reason</th><th>Detail</th><th>Record</th><th>Raw</th></tr>
+    {% for q in issues %}<tr><td>{{ status_pill('DUPLICATE_FILE' if q.kind == 'DUPLICATE' else 'QUARANTINED') }}</td><td>{{ q.source }}</td><td>{{ q.file_name }} <span class="mono small">{{ q.sha256[:12] }}</span></td><td class="num">{{ q.source_row }}</td><td class="mono">{{ q.reason_code }}</td><td class="small">{{ q.detail }}</td><td class="mono">{{ q.record_id }}</td><td class="small mono">{{ q.raw_json }}</td></tr>
+    {% else %}<tr><td colspan="8" class="muted">No row issues.</td></tr>{% endfor %}
+  </table>
+</div>
+{% endblock %}

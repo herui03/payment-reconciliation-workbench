@@ -1,0 +1,87 @@
+{% extends "base.html" %}{% from "_macros.html" import status_pill %}
+{% block title %}Case #{{ c.case_id }} · Reconciliation Workbench{% endblock %}
+{% block body %}
+<p class="small"><a href="{{ url_for('exceptions') }}">← Exceptions</a></p>
+<h1>Case #{{ c.case_id }} · {{ c.case_type }} {{ status_pill(c.status) }}</h1>
+<div class="grid g2">
+  <div class="card">
+    <h2>Summary</h2>
+    <dl class="kv">
+      <dt>Chain</dt><dd>{{ 'A · ledger gross ↔ PSP gross' if c.chain == 'A' else 'B · settlement net ↔ bank' }}</dd>
+      <dt>Subject</dt><dd class="mono">{{ c.anchor_type }} {{ c.anchor_id }}</dd>
+      <dt>Amount (engine)</dt><dd><b>{{ c.amount_minor|money(c.currency) }} {{ c.currency }}</b> <span class="small muted">read-only · {{ 'sign = ledger − PSP gross' if c.chain == 'A' else ('bank line amount' if c.anchor_type == 'bank' else ('item net' if c.anchor_type == 'psp' else 'settlement net − received (or settlement net)')) }}</span></dd>
+      <dt>Anchor date</dt><dd>{{ c.anchor_date }} · age {{ c.age_days }} days as of {{ as_of }}</dd>
+      <dt>Rule</dt><dd class="mono">{{ c.rule }}</dd>
+      <dt>Engine status</dt><dd>{{ 'Still reported in latest run' if c.engine_active else 'No longer reported (cleared)' }} · first run #{{ c.first_seen_run }}, last run #{{ c.last_seen_run }}</dd>
+      <dt>Owner</dt><dd>{{ c.owner or '—' }}</dd>
+      {% if c.disposition %}<dt>Disposition</dt><dd>{{ c.disposition }} — {{ c.resolution_reason }}</dd>{% endif %}
+    </dl>
+    <h2 style="margin-top:12px">Why <small class="muted">(engine explanation, run #{{ c.last_seen_run }})</small></h2>
+    <div class="expl" id="explanation">{{ c.explanation }}</div>
+  </div>
+  <div class="card">
+    <h2>Work the case</h2>
+    <form method="post" action="{{ url_for('case_assign', case_id=c.case_id) }}" class="inline" style="margin-bottom:10px">
+      <div><label for="owner">Owner</label><input name="owner" id="owner" value="{{ c.owner }}" placeholder="e.g. ops.analyst"></div>
+      <button class="btn secondary" style="align-self:flex-end">Assign</button>
+    </form>
+    {% if c.status == 'Open' %}
+    <form method="post" action="{{ url_for('case_status', case_id=c.case_id) }}" style="margin-bottom:10px">
+      <input type="hidden" name="status" value="In review"><button class="btn secondary" id="btn-in-review">Mark In review</button>
+    </form>
+    {% endif %}
+    {% if c.status != 'Resolved' %}
+    <form method="post" action="{{ url_for('case_status', case_id=c.case_id) }}" id="resolve-form">
+      <input type="hidden" name="status" value="Resolved">
+      <label for="disposition">Disposition (required)</label>
+      <select name="disposition" id="disposition" required><option value="">— choose —</option>{% for k, v in dispositions.items() %}<option value="{{ k }}">{{ v }}</option>{% endfor %}</select>
+      <label for="reason" style="margin-top:6px">Reason (required, ≥10 characters)</label>
+      <textarea name="reason" id="reason" required minlength="10"></textarea>
+      <button class="btn" style="margin-top:6px" id="btn-resolve">Resolve</button>
+      <p class="small muted">Resolving records your decision only. It does not create a match or change any amount; the engine keeps reporting the item until the data itself reconciles.</p>
+    </form>
+    {% else %}
+    <form method="post" action="{{ url_for('case_status', case_id=c.case_id) }}">
+      <input type="hidden" name="status" value="Open">
+      <label for="reason">Reopen reason (required)</label><textarea name="reason" id="reason" required minlength="10"></textarea>
+      <button class="btn secondary" id="btn-reopen">Reopen</button>
+    </form>
+    {% endif %}
+  </div>
+</div>
+
+<div class="card" style="margin-top:14px">
+  <h2>Evidence — source rows</h2>
+  <table id="evidence">
+    <tr><th>Role</th><th>Type</th><th>Record</th><th>File</th><th>SHA-256</th><th class="num">Row</th><th>Content</th></tr>
+    {% for e in ev %}
+    <tr><td>{{ e.role }}</td><td>{{ e.record_type }}</td><td class="mono">{{ e.record_id }}</td>
+      <td>{{ e.file_name or '—' }}</td><td class="mono">{{ (e.sha256 or '')[:12] }}</td><td class="num">{{ e.source_row or '—' }}</td>
+      <td class="small">{% if e.fields %}{% set f = e.fields %}
+        {% if e.record_type == 'ledger' %}{{ f.event_type }} {{ f.business_ref }} {{ f.merchant_account }} {{ f.gross_minor|money(f.currency) }} {{ f.currency }} gross · {{ f.event_date }}{% if f.description %} · {{ f.description }}{% endif %}
+        {% elif e.record_type == 'psp' %}{{ f.type }} {{ f.business_ref or '(no ref)' }} {{ f.merchant_account }} gross {{ f.gross_minor|money(f.currency) }} fee {{ f.fee_minor|money(f.currency) }} net {{ f.net_minor|money(f.currency) }} {{ f.currency }} · created {{ f.created_date }} · batch {{ f.settlement_batch_id or '—' }} {{ f.settlement_date }}
+        {% elif e.record_type == 'bank' %}{{ f.bank_account }} {{ f.amount_minor|money(f.currency) }} {{ f.currency }} · value {{ f.value_date }} · ref “{{ f.reference }}”{% if f.description %} · {{ f.description }}{% endif %}
+        {% elif e.record_type == 'row_issue' %}{{ f.reason_code }}: {{ f.detail }} · raw {{ f.raw_json }}{% endif %}
+      {% elif e.record_type == 'settlement' %}Settlement batch (derived from PSP items below){% endif %}</td></tr>
+    {% endfor %}
+  </table>
+</div>
+
+<div class="grid g2" style="margin-top:14px">
+  <div class="card">
+    <h2>Notes <small>(append-only)</small></h2>
+    <div id="notes">{% for n in notes %}<div class="note"><span class="small muted">{{ n.created_at }} · {{ n.actor }}</span><br>{{ n.text }}</div>{% else %}<p class="muted small">No notes yet.</p>{% endfor %}</div>
+    <form method="post" action="{{ url_for('case_note', case_id=c.case_id) }}" style="margin-top:8px">
+      <textarea name="text" id="note-text" required maxlength="4000" placeholder="What did you check / who did you contact?"></textarea>
+      <button class="btn secondary" id="btn-note">Add note</button>
+    </form>
+  </div>
+  <div class="card">
+    <h2>History <small>(audit events, read-only)</small></h2>
+    <table id="history">
+      <tr><th>Time (UTC)</th><th>Actor</th><th>Action</th><th>Detail</th></tr>
+      {% for e in events %}<tr><td class="small">{{ e.ts }}</td><td>{{ e.actor }}</td><td class="mono">{{ e.action }}</td><td class="small mono">{{ e.detail_json }}</td></tr>{% endfor %}
+    </table>
+  </div>
+</div>
+{% endblock %}

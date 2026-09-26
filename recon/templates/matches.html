@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Matches · Reconciliation Workbench{% endblock %}
+{% block body %}
+<h1>Match groups {% if run %}<span class="small muted">run #{{ run.run_id }} · as-of {{ run.as_of }}</span>{% endif %}</h1>
+<p><a class="btn {{ '' if chain == 'A' else 'secondary' }}" href="{{ url_for('matches', chain='A') }}">Chain A · ledger ↔ PSP</a>
+   <a class="btn {{ '' if chain == 'B' else 'secondary' }}" href="{{ url_for('matches', chain='B') }}">Chain B · settlement ↔ bank</a></p>
+<div class="card">
+<table>
+  <tr><th>Group</th><th>Rule</th><th>Cur</th><th class="num">Left total</th><th class="num">Right total</th><th>Members (L = {{ 'ledger' if chain == 'A' else 'settlement' }}, R = {{ 'PSP' if chain == 'A' else 'bank' }})</th><th>Explanation</th></tr>
+  {% for gr in groups %}
+  <tr><td class="mono">{{ gr.group_id }}</td><td class="mono">{{ gr.rule }}</td><td>{{ gr.currency }}</td>
+    <td class="num">{{ gr.left_total|money(gr.currency) }}</td><td class="num">{{ gr.right_total|money(gr.currency) }}</td>
+    <td class="small mono">{% for m in gr.members %}{{ m.side }}:{{ m.record_id }} ({{ m.amount_minor|money(gr.currency) }}){% if not loop.last %}<br>{% endif %}{% endfor %}</td>
+    <td class="small">{{ gr.explanation }}</td></tr>
+  {% else %}<tr><td colspan="7" class="muted">No match groups (run reconcile first).</td></tr>{% endfor %}
+</table>
+</div>
+{% endblock %}

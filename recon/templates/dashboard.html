@@ -1,0 +1,99 @@
+{% extends "base.html" %}{% from "_macros.html" import status_pill %}
+{% block title %}Dashboard · Reconciliation Workbench{% endblock %}
+{% block body %}
+<h1>Daily reconciliation</h1>
+<div class="grid g3" style="margin-bottom:14px">
+  <div class="card">
+    <h2>1 · Load data</h2>
+    <form method="post" action="{{ url_for('load_sample_route') }}" style="margin-bottom:10px">
+      <button class="btn" id="btn-load-sample">Load sample data</button>
+      <span class="small muted">Bundled synthetic fixture (21 scenarios). Re-clicking is idempotent.</span>
+    </form>
+    <form method="post" action="{{ url_for('upload') }}" enctype="multipart/form-data">
+      <div class="steps">
+        <div><label for="source">Source</label>
+          <select name="source" id="source">{% for s in sources %}<option value="{{ s }}">{{ s }}</option>{% endfor %}</select></div>
+        <div><label for="file">CSV file</label><input type="file" name="file" id="file" accept=".csv,text/csv"></div>
+      </div>
+      <label style="margin-top:6px"><input type="checkbox" name="strict" value="1"> Strict: reject whole file if any row fails</label>
+      <button class="btn secondary" style="margin-top:6px">Upload CSV</button>
+      <p class="small" style="color:var(--bad);margin:6px 0 0">Upload synthetic / demo data only. Never upload real customer, bank or employer data.</p>
+    </form>
+    <p class="small muted" style="margin:8px 0 0">Loaded records: ledger {{ counts.ledger }} · PSP {{ counts.psp }} · bank {{ counts.bank }}</p>
+  </div>
+  <div class="card">
+    <h2>2 · Reconcile</h2>
+    <form method="post" action="{{ url_for('run_reconcile') }}" class="inline">
+      <div><label for="as_of">As-of date</label><input type="date" name="as_of" id="as_of" value="{{ default_as_of }}" required></div>
+      <button class="btn" id="btn-reconcile" style="align-self:flex-end">Reconcile</button>
+    </form>
+    <p class="small muted">Runs both chains independently. Records dated after the as-of date are excluded. Re-running keeps notes, owners and audit history.</p>
+  </div>
+  <div class="card">
+    <h2>3 · Review</h2>
+    {% if d %}
+    <p style="margin:0 0 6px"><a href="{{ url_for('exceptions') }}"><b>{{ d.open_cases|length }}</b> unresolved exceptions</a>{% if d.overdue %} · <span style="color:var(--bad)">{{ d.overdue|length }} overdue (&gt;{{ sla_days }}d)</span>{% endif %}</p>
+    <p style="margin:0 0 6px"><a href="{{ url_for('data_quality') }}"><b>{{ d.dq|length }}</b> quarantined rows</a> · {{ d.duplicate_rows }} duplicate rows · {{ d.rejected_imports|length }} rejected/duplicate files</p>
+    <form method="post" action="{{ url_for('reports_generate') }}"><button class="btn secondary">Generate EOD report</button></form>
+    {% else %}<p class="muted">No run yet.</p>{% endif %}
+  </div>
+</div>
+
+{% if d and not d.live_cases %}
+<div class="flash warn" id="snapshot-banner"><b>Figures below are a snapshot of run #{{ run.run_id }}.</b> {{ d.case_basis }}{% if d.later_imports %} Reconcile again to include the {{ d.later_imports }} newer import(s).{% endif %}</div>
+{% endif %}
+{% if d %}
+<div class="kpis">
+  <div class="kpi"><div class="l">Latest run</div><div class="v">#{{ run.run_id }}</div><div class="small muted">as-of {{ run.as_of }} · {{ run.elapsed_ms }} ms</div></div>
+  <div class="kpi"><div class="l">Chain A match groups</div><div class="v">{{ d.groups|selectattr('chain','equalto','A')|sum(attribute='n') }}</div></div>
+  <div class="kpi"><div class="l">Chain B match groups</div><div class="v">{{ d.groups|selectattr('chain','equalto','B')|sum(attribute='n') }}</div></div>
+  <div class="kpi"><div class="l">Unresolved exceptions</div><div class="v">{{ d.open_cases|length }}</div></div>
+  <div class="kpi"><div class="l">Resolved manually, still unmatched</div><div class="v">{{ d.resolved_still_active|length }}</div></div>
+</div>
+
+<div class="grid">
+  <div class="card" id="chain-a">
+    <h2><span class="chain-tag">Chain A</span> Ledger gross ↔ PSP transactions <small>(gross, per currency)</small></h2>
+    <table>
+      <tr><th>Side</th><th>Cur</th><th class="num">Records</th><th class="num">Matched</th><th class="num">Matched gross</th><th class="num">Unmatched</th><th class="num">Unmatched gross</th></tr>
+      {% for side, lines in [('Ledger', d.chain_a.ledger), ('PSP', d.chain_a.psp)] %}{% for l in lines %}
+      <tr><td>{{ side }}</td><td>{{ l.currency }}</td><td class="num">{{ l.total_count }}</td><td class="num">{{ l.matched_count }}</td>
+          <td class="num">{{ l.matched_amount|money(l.currency) }}</td><td class="num">{{ l.unmatched_count }}</td><td class="num">{{ l.unmatched_amount|money(l.currency) }}</td></tr>
+      {% endfor %}{% endfor %}
+    </table>
+    <p class="small muted">PSP "unmatched" includes fee rows (out of scope for chain A) and items still in the grace period.</p>
+  </div>
+  <div class="card" id="chain-b">
+    <h2><span class="chain-tag">Chain B</span> PSP settlement net ↔ bank <small>(net, per currency)</small></h2>
+    <table>
+      <tr><th>Side</th><th>Cur</th><th class="num">Records</th><th class="num">Matched</th><th class="num">Matched net</th><th class="num">Unmatched</th><th class="num">Unmatched net</th></tr>
+      {% for side, lines in [('Settlements', d.chain_b.settlement), ('Bank lines', d.chain_b.bank), ('Unsettled PSP', d.chain_b.unsettled_psp)] %}{% for l in lines %}
+      <tr><td>{{ side }}</td><td>{{ l.currency }}</td><td class="num">{{ l.total_count }}</td><td class="num">{{ l.matched_count }}</td>
+          <td class="num">{{ l.matched_amount|money(l.currency) }}</td><td class="num">{{ l.unmatched_count }}</td><td class="num">{{ l.unmatched_amount|money(l.currency) }}</td></tr>
+      {% endfor %}{% endfor %}
+    </table>
+    <h2 style="margin-top:12px">Settlement bridge <small>gross − fees = net (settled PSP items)</small></h2>
+    <table>
+      <tr><th>Cur</th><th class="num">Batches</th><th class="num">Gross</th><th class="num">Fees</th><th class="num">Net</th></tr>
+      {% for cur, b in d.bridge|dictsort %}<tr><td>{{ cur }}</td><td class="num">{{ b.batches }}</td><td class="num">{{ b.gross_minor|money(cur) }}</td><td class="num">{{ b.fee_minor|money(cur) }}</td><td class="num">{{ b.net_minor|money(cur) }}</td></tr>{% endfor %}
+    </table>
+  </div>
+</div>
+<div class="card" style="margin-top:14px">
+  <h2>Unresolved exceptions by type</h2>
+  <table>
+    <tr><th>Chain</th><th>Type</th><th>Cur</th><th class="num">Count</th><th class="num">Absolute exposure</th></tr>
+    {% for o in d.open_by %}<tr><td>{{ o.chain }}</td><td><a href="{{ url_for('exceptions', case_type=o.case_type, currency=o.currency) }}">{{ o.case_type }}</a></td><td>{{ o.currency }}</td><td class="num">{{ o.count }}</td><td class="num">{{ o.amount|money(o.currency) }}</td></tr>{% endfor %}
+  </table>
+</div>
+{% endif %}
+
+<div class="card" style="margin-top:14px">
+  <h2>Recent imports</h2>
+  <table>
+    <tr><th>#</th><th>Source</th><th>File</th><th>SHA-256</th><th>Status</th><th>Result</th></tr>
+    {% for i in imports %}<tr><td>{{ i.import_id }}</td><td>{{ i.source }}</td><td>{{ i.file_name }}</td><td><code>{{ i.sha256[:12] }}</code></td><td>{{ status_pill(i.status) }}</td><td class="small">{{ i.message }}</td></tr>
+    {% else %}<tr><td colspan="6" class="muted">Nothing imported yet. Click “Load sample data”.</td></tr>{% endfor %}
+  </table>
+</div>
+{% endblock %}

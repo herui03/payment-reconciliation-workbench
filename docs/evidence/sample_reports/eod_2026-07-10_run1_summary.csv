@@ -1,0 +1,114 @@
+section,chain,source,currency,metric,count,amount
+run,,,,run_id=1 as_of=2026-07-10 rules=2026.09-v1 elapsed_ms=3 case_sync=True,,
+case_basis,,,,"Live case workflow state at report generation (latest run, no later imports).",,
+input_range,,ledger,,2026-07-01..2026-07-11,31,
+input_range,,psp,,2026-07-01..2026-07-09,29,
+input_range,,bank,,2026-07-03..2026-07-12,17,
+import,,ledger,,"#1 ledger.csv sha256=98a1cb744119 PARTIAL: PARTIAL: read 35, loaded 30, duplicate 1, quarantined 4",30,
+import,,psp,,"#2 psp.csv sha256=13c82c6610d9 PARTIAL: PARTIAL: read 30, loaded 29, duplicate 0, quarantined 1",29,
+import,,bank,,"#3 bank.csv sha256=c7f8f7ae69b5 PARTIAL: PARTIAL: read 19, loaded 17, duplicate 1, quarantined 1",17,
+import,,ledger,,#4 ledger.csv sha256=98a1cb744119 DUPLICATE_FILE: identical content already imported as import #1 (ledger: ledger.csv); nothing loaded,0,
+import,,ledger,,#5 ledger_renamed_copy.csv sha256=98a1cb744119 DUPLICATE_FILE: identical content already imported as import #1 (ledger: ledger.csv); nothing loaded,0,
+import,,bank,,#6 bank_missing_amount_column.csv sha256=e47da9ec7811 REJECTED: missing required column(s) for bank: amount; whole file rejected,0,
+import,,ledger,,"#7 ledger_resend_overlap.csv sha256=b33a4af83623 LOADED: read 2, loaded 1, duplicate 1, quarantined 0",1,
+chain,A (gross),ledger,EUR,total,7,3790.00
+chain,A (gross),ledger,EUR,matched,6,3490.00
+chain,A (gross),ledger,EUR,status:CURRENCY_MISMATCH,1,300.00
+chain,A (gross),ledger,SGD,total,16,8299.00
+chain,A (gross),ledger,SGD,matched,9,7145.00
+chain,A (gross),ledger,SGD,status:ACCOUNT_MISMATCH,1,50.00
+chain,A (gross),ledger,SGD,status:DATE_OUT_OF_TOLERANCE,1,130.00
+chain,A (gross),ledger,SGD,status:MISSING_IN_PSP,1,60.00
+chain,A (gross),ledger,SGD,status:PENDING,3,164.00
+chain,A (gross),ledger,SGD,status:SOURCE_CONFLICT,1,750.00
+chain,A (gross),ledger,USD,total,7,2435.00
+chain,A (gross),ledger,USD,matched,6,1935.00
+chain,A (gross),ledger,USD,status:AMOUNT_MISMATCH,1,500.00
+chain,A (gross),psp,EUR,total,6,3490.00
+chain,A (gross),psp,EUR,matched,6,3490.00
+chain,A (gross),psp,SGD,total,14,8139.00
+chain,A (gross),psp,SGD,matched,9,7145.00
+chain,A (gross),psp,SGD,status:ACCOUNT_MISMATCH,1,50.00
+chain,A (gross),psp,SGD,status:DATE_OUT_OF_TOLERANCE,1,130.00
+chain,A (gross),psp,SGD,status:MISSING_IN_LEDGER,1,64.00
+chain,A (gross),psp,SGD,status:OUT_OF_SCOPE,1,0.00
+chain,A (gross),psp,SGD,status:SOURCE_CONFLICT,1,750.00
+chain,A (gross),psp,USD,total,9,2765.00
+chain,A (gross),psp,USD,matched,6,1935.00
+chain,A (gross),psp,USD,status:AMOUNT_MISMATCH,1,450.00
+chain,A (gross),psp,USD,status:CURRENCY_MISMATCH,1,300.00
+chain,A (gross),psp,USD,status:MISSING_IN_LEDGER,1,80.00
+chain,B (net),settlement,EUR,total,6,3421.00
+chain,B (net),settlement,EUR,matched,1,147.00
+chain,B (net),settlement,EUR,status:AMBIGUOUS_CANDIDATES,2,980.00
+chain,B (net),settlement,EUR,status:PARTIAL_RECEIPT,1,2000.00
+chain,B (net),settlement,EUR,status:SUGGESTED_GROUP,2,294.00
+chain,B (net),settlement,SGD,total,7,7372.00
+chain,B (net),settlement,SGD,matched,5,7029.00
+chain,B (net),settlement,SGD,status:ACCOUNT_MISMATCH,1,196.00
+chain,B (net),settlement,SGD,status:IN_TRANSIT,1,147.00
+chain,B (net),settlement,USD,total,5,2260.10
+chain,B (net),settlement,USD,matched,3,1969.10
+chain,B (net),settlement,USD,status:DATE_OUT_OF_WINDOW,1,194.00
+chain,B (net),settlement,USD,status:MISSING_IN_BANK,1,97.00
+chain,B (net),bank,EUR,total,4,2131.00
+chain,B (net),bank,EUR,matched,1,147.00
+chain,B (net),bank,EUR,status:AMBIGUOUS,1,490.00
+chain,B (net),bank,EUR,status:HELD_FOR_REVIEW,1,1200.00
+chain,B (net),bank,EUR,status:SUGGESTED,1,294.00
+chain,B (net),bank,SGD,total,9,7300.55
+chain,B (net),bank,SGD,matched,6,7029.00
+chain,B (net),bank,SGD,status:HELD_FOR_REVIEW,1,196.00
+chain,B (net),bank,SGD,status:SOURCE_CONFLICT,1,20.00
+chain,B (net),bank,SGD,status:UNEXPECTED_BANK_CREDIT,1,55.55
+chain,B (net),bank,USD,total,3,2163.10
+chain,B (net),bank,USD,matched,2,1969.10
+chain,B (net),bank,USD,status:HELD_FOR_REVIEW,1,194.00
+chain,B (net),unsettled_psp,SGD,total,4,577.22
+chain,B (net),unsettled_psp,SGD,matched,0,0.00
+chain,B (net),unsettled_psp,SGD,status:NOT_DUE,3,514.50
+chain,B (net),unsettled_psp,SGD,status:UNSETTLED_OVERDUE,1,62.72
+chain,B (net),unsettled_psp,USD,total,3,421.95
+chain,B (net),unsettled_psp,USD,matched,0,0.00
+chain,B (net),unsettled_psp,USD,status:NOT_DUE,3,421.95
+settlement_bridge,B,psp,EUR,gross,6,3490.00
+settlement_bridge,B,psp,EUR,fee,6,69.00
+settlement_bridge,B,psp,EUR,net,6,3421.00
+settlement_bridge,B,psp,SGD,gross,7,7550.00
+settlement_bridge,B,psp,SGD,fee,7,178.00
+settlement_bridge,B,psp,SGD,net,7,7372.00
+settlement_bridge,B,psp,USD,gross,5,2330.00
+settlement_bridge,B,psp,USD,fee,5,69.90
+settlement_bridge,B,psp,USD,net,5,2260.10
+match_groups,A,A1_EXACT_REF,EUR,groups,6,3490.00
+match_groups,A,A1_EXACT_REF,SGD,groups,9,7145.00
+match_groups,A,A1_EXACT_REF,USD,groups,6,1935.00
+match_groups,B,B1_REF_1TO1,SGD,groups,4,2029.00
+match_groups,B,B1_REF_1TO1,USD,groups,1,514.10
+match_groups,B,B2M_REF_MERGED,USD,groups,1,1455.00
+match_groups,B,B2S_REF_SPLIT,SGD,groups,1,5000.00
+match_groups,B,B3_AMOUNT_DATE_UNIQUE,EUR,groups,1,147.00
+open_exceptions,A,ACCOUNT_MISMATCH,SGD,open (abs exposure),2,100.00
+open_exceptions,A,AMOUNT_MISMATCH,USD,open (abs exposure),1,50.00
+open_exceptions,A,CURRENCY_MISMATCH,EUR,open (abs exposure),1,300.00
+open_exceptions,A,DATE_OUT_OF_TOLERANCE,SGD,open (abs exposure),1,130.00
+open_exceptions,A,MISSING_IN_LEDGER,SGD,open (abs exposure),1,64.00
+open_exceptions,A,MISSING_IN_LEDGER,USD,open (abs exposure),1,80.00
+open_exceptions,A,MISSING_IN_PSP,SGD,open (abs exposure),1,60.00
+open_exceptions,A,SOURCE_CONFLICT,SGD,open (abs exposure),1,750.00
+open_exceptions,B,ACCOUNT_MISMATCH,SGD,open (abs exposure),1,196.00
+open_exceptions,B,AMBIGUOUS_CANDIDATES,EUR,open (abs exposure),2,980.00
+open_exceptions,B,DATE_OUT_OF_WINDOW,USD,open (abs exposure),1,194.00
+open_exceptions,B,MISSING_IN_BANK,USD,open (abs exposure),1,97.00
+open_exceptions,B,PARTIAL_RECEIPT,EUR,open (abs exposure),1,800.00
+open_exceptions,B,SOURCE_CONFLICT,SGD,open (abs exposure),1,20.00
+open_exceptions,B,SUGGESTED_GROUP,EUR,open (abs exposure),2,294.00
+open_exceptions,B,UNSETTLED_OVERDUE,SGD,open (abs exposure),1,62.72
+overdue,,,,open cases older than 3d,14,
+data_quality,,,,quarantined rows,6,
+data_quality,,,,duplicate rows skipped,3,
+data_quality,,,,rejected or duplicate files,3,
+as_of_cutoff,,bank,,excluded (dated after as-of),1,
+as_of_cutoff,,ledger,,excluded (dated after as-of),1,
+as_of_cutoff,,psp,,excluded (dated after as-of),0,
+as_of_cutoff,,psp_settlement_after_as_of,,excluded (dated after as-of),1,

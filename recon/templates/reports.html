@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}Reports · Reconciliation Workbench{% endblock %}
+{% block body %}
+<h1>End-of-day reports</h1>
+<div class="card">
+  <form method="post" action="{{ url_for('reports_generate') }}" class="inline">
+    <button class="btn" id="btn-generate" {{ 'disabled' if not run }}>Generate EOD report for latest run{% if run %} (#{{ run.run_id }}, as-of {{ run.as_of }}){% endif %}</button>
+  </form>
+  <p class="small muted">Writes HTML plus summary / exceptions / data-quality CSVs. Text cells are protected against spreadsheet formula injection.</p>
+  <table id="report-files"><tr><th>File</th></tr>
+    {% for f in files %}<tr><td><a href="{{ url_for('reports_file', name=f) }}" target="_blank">{{ f }}</a></td></tr>{% else %}<tr><td class="muted">No reports yet.</td></tr>{% endfor %}
+  </table>
+</div>
+{% endblock %}

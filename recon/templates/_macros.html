@@ -1,0 +1,6 @@
+{% macro status_pill(s) -%}
+{%- set ok = ['MATCHED','LOADED','Resolved'] -%}
+{%- set info = ['PENDING','IN_TRANSIT','NOT_DUE','OUT_OF_SCOPE','In review'] -%}
+{%- set warn = ['PARTIAL','DUPLICATE_FILE','SUGGESTED','SUGGESTED_GROUP','HELD_FOR_REVIEW','AMBIGUOUS','Open'] -%}
+<span class="pill {{ 'ok' if s in ok else ('info' if s in info else ('warn' if s in warn else 'bad')) }}">{{ s }}</span>
+{%- endmacro %}

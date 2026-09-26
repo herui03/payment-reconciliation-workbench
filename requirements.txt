@@ -1,0 +1,4 @@
+flask>=3.0,<4
+pytest>=8
+# optional: real-browser UI smoke test (tests/test_ui_playwright.py skips if absent)
+playwright>=1.40

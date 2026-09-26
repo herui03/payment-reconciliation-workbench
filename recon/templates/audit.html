@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}Audit log · Reconciliation Workbench{% endblock %}
+{% block body %}
+<h1>Audit log <span class="small muted">latest 500 · read-only</span></h1>
+<p class="small muted">Append-only in this app (SQLite triggers reject UPDATE/DELETE). This is a demo control, not tamper-proof storage: anyone with the database file can alter it outside the app. Actors are demo labels, not authenticated users.</p>
+<div class="card">
+<table>
+  <tr><th>#</th><th>Time (UTC)</th><th>Actor</th><th>Entity</th><th>Action</th><th>Run</th><th>Detail</th></tr>
+  {% for e in rows %}<tr><td>{{ e.event_id }}</td><td class="small">{{ e.ts }}</td><td>{{ e.actor }}</td><td>{{ e.entity_type }} {% if e.entity_type == 'case' %}<a href="{{ url_for('case_detail', case_id=e.entity_id|int) }}">#{{ e.entity_id }}</a>{% else %}{{ e.entity_id }}{% endif %}</td><td class="mono">{{ e.action }}</td><td>{{ e.run_id or '' }}</td><td class="small mono">{{ e.detail_json }}</td></tr>{% endfor %}
+</table>
+</div>
+{% endblock %}
