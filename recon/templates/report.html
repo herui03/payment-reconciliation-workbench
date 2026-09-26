@@ -85,7 +85,7 @@
 
 <h2>4. Unresolved exceptions ({{ d.open_cases|length }}) — overdue after {{ d.sla_days }} days: {{ d.overdue|length }}</h2>
 <table>
-  <tr><th>Chain</th><th>Type</th><th>Currency</th><th class="num">Open</th><th class="num">Amount</th></tr>
+  <tr><th>Chain</th><th>Type</th><th>Currency</th><th class="num">Open</th><th class="num">Absolute exposure</th></tr>
   {% for o in d.open_by %}<tr><td>{{ o.chain }}</td><td>{{ o.case_type }}</td><td>{{ o.currency }}</td><td class="num">{{ o.count }}</td><td class="num">{{ o.amount|money(o.currency) }}</td></tr>{% endfor %}
 </table>
 <table>

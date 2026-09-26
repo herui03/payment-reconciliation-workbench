@@ -93,11 +93,13 @@ def eod_data(conn: sqlite3.Connection, run_id: int | None = None) -> dict:
         c["overdue"] = c["status"] != "Resolved" and c["age_days"] > SLA_DAYS
     open_cases = [c for c in cases if c["status"] != "Resolved"]
     resolved_still_active = [c for c in cases if c["status"] == "Resolved" and c["engine_active"]]
+    # Aggregate ABSOLUTE exposure: signed exposures of opposite sides (e.g. +50 / -50 for the two halves of an
+    # account mismatch) must not net to zero in a management summary.
     open_by = defaultdict(lambda: {"count": 0, "amount": 0})
     for c in open_cases:
         x = open_by[(c["chain"], c["case_type"], c["currency"])]
         x["count"] += 1
-        x["amount"] += c["amount_minor"]
+        x["amount"] += abs(c["amount_minor"])
     dq = [dict(r) for r in conn.execute(
         "SELECT ri.*, i.file_name, i.sha256 FROM row_issues ri JOIN imports i USING(import_id) "
         "WHERE ri.kind='QUARANTINED' ORDER BY ri.issue_id")]
@@ -151,7 +153,7 @@ def summary_csv(d: dict) -> str:
         rows.append(["match_groups", g["chain"], g["rule"], g["currency"], "groups", g["n"],
                      to_plain(g["amt"], g["currency"])])
     for o in d["open_by"]:
-        rows.append(["open_exceptions", o["chain"], o["case_type"], o["currency"], "open", o["count"],
+        rows.append(["open_exceptions", o["chain"], o["case_type"], o["currency"], "open (abs exposure)", o["count"],
                      to_plain(o["amount"], o["currency"])])
     rows.append(["overdue", "", "", "", f"open cases older than {d['sla_days']}d", len(d["overdue"]), ""])
     rows.append(["data_quality", "", "", "", "quarantined rows", len(d["dq"]), ""])

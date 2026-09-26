@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}Reconciliation Workbench{% endblock %}</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='app.css') }}">
+</head>
+<body>
+<header class="top"><div class="wrap">
+  <span class="brand">Payment Reconciliation Workbench</span>
+  <nav>
+    {% set ep = request.endpoint %}
+    <a href="{{ url_for('dashboard') }}" class="{{ 'active' if ep == 'dashboard' }}">Dashboard</a>
+    <a href="{{ url_for('exceptions') }}" class="{{ 'active' if ep in ('exceptions','case_detail') }}">Exceptions</a>
+    <a href="{{ url_for('matches') }}" class="{{ 'active' if ep == 'matches' }}">Matches</a>
+    <a href="{{ url_for('data_quality') }}" class="{{ 'active' if ep == 'data_quality' }}">Data quality</a>
+    <a href="{{ url_for('reports') }}" class="{{ 'active' if ep == 'reports' }}">Reports</a>
+    <a href="{{ url_for('audit_log') }}" class="{{ 'active' if ep == 'audit_log' }}">Audit log</a>
+  </nav>
+  <form method="post" action="{{ url_for('set_actor') }}" title="Demo label only - not authentication">
+    Demo actor <input name="actor" value="{{ actor }}" aria-label="Demo actor label"> <button class="btn secondary" style="padding:2px 8px">Set</button>
+  </form>
+</div></header>
+<div class="demo-banner">Local single-user demo · synthetic data only · actor is a demo label, not an authenticated identity · not an audit-grade or regulatory system · rules {{ rules_version }}</div>
+<main>
+  {% with msgs = get_flashed_messages(with_categories=true) %}{% for cat, m in msgs %}<div class="flash {{ cat }}" role="status">{{ m }}</div>{% endfor %}{% endwith %}
+  {% block body %}{% endblock %}
+</main>
+</body>
+</html>

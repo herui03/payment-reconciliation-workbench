@@ -613,6 +613,14 @@ def _ref_component(b: _Builder, S, K, in_window, s_fail, skey, s_evid, k_evid) -
         exact = [k for k in K if k.amount == s.net and in_window(s, k)]
         if len(exact) == 1:
             k = exact[0]
+            others = [x for x in K if x is not k and in_window(s, x)]
+            alt = _has_subset_sum(others, s.net, r.max_ref_group, r.max_candidates)
+            if alt:
+                s_fail(s, "AMBIGUOUS_CANDIDATES", "B-X4_AMBIGUOUS", s.net,
+                       f"Bank line {k.record_id} equals net {_m(s.net, cur)} exactly, but lines "
+                       f"{', '.join(x.record_id for x in alt)} also reference {s.batch_id} and sum to the same net. "
+                       f"Two competing explanations; nothing is auto-matched.", K, "candidate", "AMBIGUOUS")
+                return
             b.group("B", "B1_REF_1TO1", cur,
                     [Member("L", "settlement", s.batch_id, s.net), Member("R", "bank", k.record_id, k.amount)],
                     f"B1: bank reference '{k.reference}' names batch {s.batch_id}; amount {_m(k.amount, cur)} equals "
@@ -684,6 +692,16 @@ def _ref_component(b: _Builder, S, K, in_window, s_fail, skey, s_evid, k_evid) -
         s_fail(s, "COMPLEX_REFERENCE", "B-X13_COMPLEX", s.net,
                f"Many-to-many reference links between settlements {', '.join(x.batch_id for x in S)} and bank lines "
                f"{', '.join(k.record_id for k in K)}; requires manual review.", K, "referencing_line")
+
+
+def _has_subset_sum(lines, target: int, max_size: int, max_candidates: int):
+    """Return one combination (size >= 2) of ``lines`` summing to ``target``, or None. Bounded search."""
+    lines = sorted(lines, key=lambda k: k.record_id)[:max_candidates]
+    for n in range(2, min(max_size, len(lines)) + 1):
+        for combo in combinations(lines, n):
+            if sum(k.amount for k in combo) == target:
+                return list(combo)
+    return None
 
 
 # ---------------------------------------------------------------- invariants

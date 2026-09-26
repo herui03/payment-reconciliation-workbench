@@ -1,0 +1,31 @@
+{% extends "base.html" %}{% from "_macros.html" import status_pill %}
+{% block title %}Exceptions · Reconciliation Workbench{% endblock %}
+{% block body %}
+<h1>Exceptions</h1>
+<form class="filters" method="get">
+  <div><label>Status</label><select name="status">
+    {% for v, l in [('unresolved','Unresolved'),('all','All'),('Open','Open'),('In review','In review'),('Resolved','Resolved')] %}<option value="{{ v }}" {{ 'selected' if view == v }}>{{ l }}</option>{% endfor %}</select></div>
+  <div><label>Chain</label><select name="chain"><option value="">All</option>{% for c in ['A','B'] %}<option {{ 'selected' if f.chain == c }}>{{ c }}</option>{% endfor %}</select></div>
+  <div><label>Type</label><select name="case_type"><option value="">All</option>{% for t in types %}<option {{ 'selected' if f.case_type == t }}>{{ t }}</option>{% endfor %}</select></div>
+  <div><label>Currency</label><select name="currency"><option value="">All</option>{% for c in curs %}<option {{ 'selected' if f.currency == c }}>{{ c }}</option>{% endfor %}</select></div>
+  <div><label>Age as-of</label><input type="date" name="as_of" value="{{ as_of }}"></div>
+  <button class="btn secondary">Apply</button>
+</form>
+<div class="card">
+<table id="exceptions-table">
+  <tr><th>ID</th><th>Chain</th><th>Type</th><th>Subject</th><th class="num">Amount</th><th>Cur</th><th class="num">Age (d)</th><th>Owner</th><th>Status</th><th class="num">Notes</th><th>Rule</th></tr>
+  {% for c in rows %}
+  <tr class="{{ 'overdue' if c.overdue }}">
+    <td><a href="{{ url_for('case_detail', case_id=c.case_id, as_of=as_of) }}">#{{ c.case_id }}</a></td>
+    <td>{{ c.chain }}</td><td>{{ c.case_type }}</td><td class="mono">{{ c.anchor_id }}</td>
+    <td class="num">{{ c.amount_minor|money(c.currency) }}</td><td>{{ c.currency }}</td>
+    <td class="num">{{ c.age_days }}{% if c.overdue %} <span class="pill bad" title="older than {{ sla_days }} days">overdue</span>{% endif %}</td>
+    <td>{{ c.owner or '—' }}</td>
+    <td>{{ status_pill(c.status) }}{% if c.disposition %} <span class="small muted">{{ c.disposition }}</span>{% endif %}{% if c.status == 'Resolved' and c.engine_active %} <span class="pill warn" title="Engine still reports this issue">still unmatched</span>{% endif %}</td>
+    <td class="num">{{ c.note_count }}</td><td class="small mono">{{ c.rule }}</td>
+  </tr>
+  {% else %}<tr><td colspan="11" class="muted">No exceptions for this filter.</td></tr>{% endfor %}
+</table>
+<p class="small muted">{{ rows|length }} case(s). Amount = engine-computed exposure (read-only); sign convention in docs/matching-rules.md. Age = as-of date minus anchor date.</p>
+</div>
+{% endblock %}
