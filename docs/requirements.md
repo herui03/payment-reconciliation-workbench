@@ -67,8 +67,8 @@ integrate with Stripe and does **not** accept its full report format.
 | EXC-04 | Manual resolution never creates a matched result and never changes amounts. |
 | EXC-05 | Every state change writes an audit event; no UI or API edits/deletes audit events or notes. |
 | EXC-06 | Re-running reconciliation keeps notes, owners, statuses and audit history, and never creates a duplicate unresolved case for the same subject. |
-| EXC-08 | A run whose as-of is earlier than the latest workflow run is a read-only historical snapshot: it never opens, clears, re-opens or edits cases, and the UI/CLI/API state this. |
 | EXC-07 | If late data causes a previously open case's subject to match, the case is auto-resolved with disposition `AUTO_CLEARED` by actor `system`, with an audit event; a manually resolved case stays resolved and gets an informational audit event. If an auto-cleared issue re-appears, the case is re-opened by `system`. |
+| EXC-08 | A run whose as-of is earlier than the latest workflow run is a read-only historical snapshot: it never opens, clears, re-opens or edits cases, and the UI/CLI/API state this. |
 
 ### 4.4 Reporting (RPT)
 | ID | Requirement |

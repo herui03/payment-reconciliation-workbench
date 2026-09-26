@@ -26,7 +26,7 @@ the tool yet. Test IDs refer to `docs/evidence/pytest_output.txt` (127 passed, 0
 | EXC-05 | Audit/notes append-only; no edit routes | `test_audit_and_notes_are_append_only`, `test_web_resolve_validation_and_no_edit_endpoints`; walkthrough step 7 | — |
 | EXC-06/07 | Re-run keeps notes; no duplicate cases; late data auto-clears; backward as-of is read-only | `test_rerun_same_data_is_idempotent`, `test_step3_late_data_rerun`, `test_backward_as_of_run_is_read_only_for_cases` | — |
 | RPT-01/02 | EOD CSV + HTML, per currency, bridge, DQ, overdue, rules version; historical report run-consistent | `test_eod_report_per_currency_and_chains_separate`, `test_historical_report_is_run_consistent`; `docs/evidence/sample_reports/` | — |
-| RPT-03 | Runs from a clean clone | Clean clone + fresh venv: 121 tests passed and `demo` succeeded (before reviewer fixes; re-verified in STATUS.md) | — |
+| RPT-03 | Runs from a clean clone | Clean clone from GitHub + fresh venv at 80babd1: 127 passed, `demo` succeeded; GitHub Actions green | — |
 | EVAL-01..03 | Golden ≥15 scenarios; generator; benchmark with denominators | 21 scenarios; `benchmark/results/` | — |
 
 ## External UAT script (to be run with a real user — not yet done)
