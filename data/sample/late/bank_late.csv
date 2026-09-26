@@ -1,0 +1,4 @@
+bank_txn_id,bank_account,currency,amount,value_date,reference,description
+B-020,BANK-EU-001,EUR,800.00,2026-07-08,STL-EU-0705,PSP PAYOUT remainder (statement delivered late)
+B-021,BANK-US-001,USD,97.00,2026-07-06,STL-US-0704,PSP PAYOUT (statement delivered late)
+B-022,BANK-SG-001,SGD,147.00,2026-07-11,STL-SG-0710,PSP PAYOUT

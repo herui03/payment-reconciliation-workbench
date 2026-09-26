@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EOD Reconciliation Report — {{ d.as_of }}</title>
+<style>
+  :root { --ink:#1b2430; --muted:#5b6675; --line:#dde3ea; --bg:#f6f8fa; --ok:#1f7a4d; --warn:#9a6700; --bad:#b42318; }
+  body { font: 14px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; color: var(--ink); margin: 24px auto; max-width: 1100px; padding: 0 16px; background: #fff; }
+  h1 { font-size: 22px; margin: 0 0 4px; } h2 { font-size: 17px; margin: 28px 0 8px; border-bottom: 1px solid var(--line); padding-bottom: 4px; }
+  h3 { font-size: 14px; margin: 16px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+  .meta { color: var(--muted); font-size: 13px; }
+  .banner { background: #fff8e6; border: 1px solid #f0d58c; padding: 8px 12px; border-radius: 6px; font-size: 13px; margin: 12px 0; }
+  table { border-collapse: collapse; width: 100%; margin: 6px 0 12px; font-size: 13px; }
+  th, td { border-bottom: 1px solid var(--line); padding: 5px 8px; text-align: left; vertical-align: top; }
+  th { background: var(--bg); font-weight: 600; }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .ok { color: var(--ok); } .bad { color: var(--bad); } .warn { color: var(--warn); }
+  .small { font-size: 12px; color: var(--muted); }
+</style>
+</head>
+<body>
+<h1>End-of-day reconciliation report</h1>
+<div class="meta">As-of {{ d.as_of }} · Run #{{ d.run.run_id }} · Rules {{ d.rules_version }} · Run started {{ d.run.started_at }} · finished {{ d.run.finished_at }} · {{ d.run.elapsed_ms }} ms · Report generated {{ d.generated_at }}</div>
+<div class="banner">Synthetic demo data only. Single-user local prototype: actor names are demo labels, not authenticated identities. Not a regulatory or audit-grade record. Amounts are shown per currency and never summed across currencies.</div>
+
+<h2>1. Input data scope</h2>
+<table>
+  <tr><th>Source</th><th class="num">Records loaded</th><th>Business date range</th><th class="num">Excluded (dated after as-of)</th></tr>
+  {% for src, r in d.ranges.items() %}
+  <tr><td>{{ src }}</td><td class="num">{{ r.n }}</td><td>{{ r.lo or '—' }} … {{ r.hi or '—' }}</td><td class="num">{{ d.excluded_after_as_of.get(src, 0) }}</td></tr>
+  {% endfor %}
+</table>
+<h3>Files</h3>
+<table>
+  <tr><th>#</th><th>Source</th><th>File</th><th>SHA-256</th><th>Status</th><th class="num">Read</th><th class="num">Loaded</th><th class="num">Dup</th><th class="num">Quarantined</th></tr>
+  {% for i in d.imports %}
+  <tr><td>{{ i.import_id }}</td><td>{{ i.source }}</td><td>{{ i.file_name }}</td><td><code>{{ i.sha256[:12] }}</code></td>
+      <td class="{{ 'ok' if i.status == 'LOADED' else ('warn' if i.status in ('PARTIAL','DUPLICATE_FILE') else 'bad') }}">{{ i.status }}</td>
+      <td class="num">{{ i.rows_read }}</td><td class="num">{{ i.rows_loaded }}</td><td class="num">{{ i.rows_duplicate }}</td><td class="num">{{ i.rows_quarantined }}</td></tr>
+  {% endfor %}
+</table>
+
+<h2>2. Chain A — ledger gross vs PSP transactions (gross)</h2>
+{% for label, lines in [('Ledger entries', d.chain_a.ledger), ('PSP charge/refund/fee items', d.chain_a.psp)] %}
+<h3>{{ label }}</h3>
+<table>
+  <tr><th>Currency</th><th class="num">Records</th><th class="num">Gross</th><th class="num">Matched</th><th class="num">Matched gross</th><th class="num">Not matched</th><th class="num">Not matched gross</th><th>Breakdown</th></tr>
+  {% for l in lines %}
+  <tr><td>{{ l.currency }}</td><td class="num">{{ l.total_count }}</td><td class="num">{{ l.total_amount|money(l.currency) }}</td>
+      <td class="num ok">{{ l.matched_count }}</td><td class="num">{{ l.matched_amount|money(l.currency) }}</td>
+      <td class="num {{ 'bad' if l.unmatched_count else '' }}">{{ l.unmatched_count }}</td><td class="num">{{ l.unmatched_amount|money(l.currency) }}</td>
+      <td class="small">{% for st, v in l.by_status.items() %}{{ st }}: {{ v.count }} ({{ v.amount|money(l.currency) }}){% if not loop.last %}; {% endif %}{% endfor %}</td></tr>
+  {% endfor %}
+</table>
+{% endfor %}
+
+<h2>3. Chain B — PSP settlement net vs bank</h2>
+{% for label, lines in [('Settlement batches (net)', d.chain_b.settlement), ('Bank statement lines', d.chain_b.bank), ('Unsettled PSP items (net, no batch as of date)', d.chain_b.unsettled_psp)] %}
+<h3>{{ label }}</h3>
+{% if lines %}
+<table>
+  <tr><th>Currency</th><th class="num">Records</th><th class="num">Amount</th><th class="num">Matched</th><th class="num">Matched amount</th><th class="num">Not matched</th><th class="num">Not matched amount</th><th>Breakdown</th></tr>
+  {% for l in lines %}
+  <tr><td>{{ l.currency }}</td><td class="num">{{ l.total_count }}</td><td class="num">{{ l.total_amount|money(l.currency) }}</td>
+      <td class="num ok">{{ l.matched_count }}</td><td class="num">{{ l.matched_amount|money(l.currency) }}</td>
+      <td class="num">{{ l.unmatched_count }}</td><td class="num">{{ l.unmatched_amount|money(l.currency) }}</td>
+      <td class="small">{% for st, v in l.by_status.items() %}{{ st }}: {{ v.count }} ({{ v.amount|money(l.currency) }}){% if not loop.last %}; {% endif %}{% endfor %}</td></tr>
+  {% endfor %}
+</table>
+{% else %}<p class="small">None.</p>{% endif %}
+{% endfor %}
+<h3>Settlement bridge (PSP settled items: gross − fees = net). Links chain A gross to chain B net; not additive with either.</h3>
+<table>
+  <tr><th>Currency</th><th class="num">Batches</th><th class="num">Gross</th><th class="num">Fees</th><th class="num">Net</th></tr>
+  {% for cur, b in d.bridge|dictsort %}
+  <tr><td>{{ cur }}</td><td class="num">{{ b.batches }}</td><td class="num">{{ b.gross_minor|money(cur) }}</td><td class="num">{{ b.fee_minor|money(cur) }}</td><td class="num">{{ b.net_minor|money(cur) }}</td></tr>
+  {% endfor %}
+</table>
+<h3>Match groups by rule</h3>
+<table>
+  <tr><th>Chain</th><th>Rule</th><th>Currency</th><th class="num">Groups</th><th class="num">Amount (one side)</th></tr>
+  {% for g in d.groups %}<tr><td>{{ g.chain }}</td><td>{{ g.rule }}</td><td>{{ g.currency }}</td><td class="num">{{ g.n }}</td><td class="num">{{ g.amt|money(g.currency) }}</td></tr>{% endfor %}
+</table>
+
+<h2>4. Unresolved exceptions ({{ d.open_cases|length }}) — overdue after {{ d.sla_days }} days: {{ d.overdue|length }}</h2>
+<table>
+  <tr><th>Chain</th><th>Type</th><th>Currency</th><th class="num">Open</th><th class="num">Amount</th></tr>
+  {% for o in d.open_by %}<tr><td>{{ o.chain }}</td><td>{{ o.case_type }}</td><td>{{ o.currency }}</td><td class="num">{{ o.count }}</td><td class="num">{{ o.amount|money(o.currency) }}</td></tr>{% endfor %}
+</table>
+<table>
+  <tr><th>ID</th><th>Type</th><th>Subject</th><th>Status</th><th>Owner</th><th class="num">Amount</th><th class="num">Age (d)</th><th>Explanation</th></tr>
+  {% for c in d.open_cases %}
+  <tr><td>{{ c.case_id }}</td><td>{{ c.case_type }}</td><td>{{ c.anchor_id }}</td><td>{{ c.status }}</td><td>{{ c.owner or '—' }}</td>
+      <td class="num">{{ c.amount_minor|money(c.currency) }} {{ c.currency }}</td><td class="num {{ 'bad' if c.overdue else '' }}">{{ c.age_days }}{% if c.overdue %} ⚑{% endif %}</td><td class="small">{{ c.explanation }}</td></tr>
+  {% endfor %}
+</table>
+{% if d.resolved_still_active %}
+<h3>Resolved manually but still reported by the engine ({{ d.resolved_still_active|length }}) — not counted as matched</h3>
+<table>
+  <tr><th>ID</th><th>Type</th><th>Subject</th><th>Disposition</th><th>Reason</th></tr>
+  {% for c in d.resolved_still_active %}<tr><td>{{ c.case_id }}</td><td>{{ c.case_type }}</td><td>{{ c.anchor_id }}</td><td>{{ c.disposition }}</td><td>{{ c.resolution_reason }}</td></tr>{% endfor %}
+</table>
+{% endif %}
+
+<h2>5. Data quality</h2>
+<p>Quarantined rows: <b>{{ d.dq|length }}</b> · Duplicate rows skipped: <b>{{ d.duplicate_rows }}</b> · Rejected / duplicate files: <b>{{ d.rejected_imports|length }}</b></p>
+<table>
+  <tr><th>Source</th><th>File</th><th>Row</th><th>Reason</th><th>Detail</th></tr>
+  {% for q in d.dq %}<tr><td>{{ q.source }}</td><td>{{ q.file_name }} <code>{{ q.sha256[:12] }}</code></td><td>{{ q.source_row }}</td><td>{{ q.reason_code }}</td><td class="small">{{ q.detail }}</td></tr>{% endfor %}
+  {% for i in d.rejected_imports %}<tr><td>{{ i.source }}</td><td>{{ i.file_name }} <code>{{ i.sha256[:12] }}</code></td><td>—</td><td>{{ i.status }}</td><td class="small">{{ i.message }}</td></tr>{% endfor %}
+</table>
+<p class="small">Rules version {{ d.rules_version }}. Rule parameters: {{ d.summary.rules }}. Engine time {{ d.summary.engine_ms }} ms.</p>
+</body>
+</html>

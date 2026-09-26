@@ -1,0 +1,10 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+work/
+*.db
+*.db-journal
+benchmark/data/
+tests/evaluation/out/
+dist/

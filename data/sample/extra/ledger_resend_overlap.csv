@@ -1,0 +1,3 @@
+ledger_entry_id,event_type,business_ref,original_ref,merchant_account,currency,gross_amount,event_date,description
+L-1001,SALE,ORD-1001,,MER-SG-01,SGD,1000,2026-07-01,S01 normal sale
+L-1035,SALE,ORD-1035,,MER-SG-01,SGD,20.00,2026-07-09,S07 new row in overlapping re-send
