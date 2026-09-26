@@ -1,0 +1,617 @@
+{
+  "meta": {
+    "run_date": "2026-09-26",
+    "platform": "Linux-6.18.44-fc-v37-x86_64-with-glibc2.39",
+    "python": "3.11.15",
+    "rules_version": "2026.09-v1"
+  },
+  "results": [
+    {
+      "dataset": "dev_seed42_default",
+      "seed": 42,
+      "profile": "default",
+      "rows_target": 3000,
+      "as_of": "2026-04-13",
+      "generated": {
+        "ledger": 2973,
+        "psp": 2973,
+        "bank": 566,
+        "batches": 550
+      },
+      "imports": {
+        "ledger": {
+          "status": "LOADED",
+          "read": 2973,
+          "loaded": 2973,
+          "quarantined": 0
+        },
+        "psp": {
+          "status": "LOADED",
+          "read": 2973,
+          "loaded": 2973,
+          "quarantined": 0
+        },
+        "bank": {
+          "status": "LOADED",
+          "read": 566,
+          "loaded": 566,
+          "quarantined": 0
+        }
+      },
+      "chain_a": {
+        "auto_matched_groups": 2899,
+        "false_matches": 0,
+        "false_match_denominator": 2899,
+        "false_match_rate": 0.0,
+        "clean_pairs": 2899,
+        "clean_pairs_auto_matched": 2899,
+        "coverage_clean": 1.0,
+        "truth_pairs_total": 2947,
+        "coverage_all_truth_pairs": 0.9837,
+        "anomalous_pairs_auto_matched": {},
+        "truth_labels": {
+          "clean": 2899,
+          "missing_psp": 26,
+          "missing_ledger": 26,
+          "date_shift": 30,
+          "amount_diff": 18
+        }
+      },
+      "chain_b": {
+        "auto_matched_groups": 512,
+        "false_matches": 0,
+        "false_match_denominator": 512,
+        "false_match_rate": 0.0,
+        "false_match_rules": {},
+        "v1_matchable_truth_groups": 512,
+        "v1_matchable_matched_exactly": 512,
+        "coverage_v1_matchable": 1.0,
+        "by_truth_label": {
+          "clean_noref": {
+            "truth_groups": 66,
+            "engine_exact": 66
+          },
+          "clean_ref": {
+            "truth_groups": 406,
+            "engine_exact": 406
+          },
+          "late_bank": {
+            "truth_groups": 7,
+            "engine_exact": 0
+          },
+          "merge": {
+            "truth_groups": 15,
+            "engine_exact": 15
+          },
+          "missing_bank": {
+            "truth_groups": 11,
+            "engine_exact": 0
+          },
+          "partial": {
+            "truth_groups": 5,
+            "engine_exact": 0
+          },
+          "split": {
+            "truth_groups": 25,
+            "engine_exact": 25
+          }
+        },
+        "groups_by_rule": {
+          "B1_REF_1TO1": 406,
+          "B2M_REF_MERGED": 15,
+          "B2S_REF_SPLIT": 25,
+          "B3_AMOUNT_DATE_UNIQUE": 66
+        },
+        "settlement_status": {
+          "MATCHED": 527,
+          "DATE_OUT_OF_WINDOW": 7,
+          "MISSING_IN_BANK": 11,
+          "PARTIAL_RECEIPT": 5
+        },
+        "noise_bank_lines": 5
+      },
+      "unresolved_by_type": {
+        "A:AMOUNT_MISMATCH": 18,
+        "A:DATE_OUT_OF_TOLERANCE": 30,
+        "A:MISSING_IN_LEDGER": 26,
+        "A:MISSING_IN_PSP": 26,
+        "B:DATE_OUT_OF_WINDOW": 7,
+        "B:MISSING_IN_BANK": 11,
+        "B:PARTIAL_RECEIPT": 5,
+        "B:UNEXPECTED_BANK_CREDIT": 5
+      },
+      "elapsed_s": {
+        "generate": 0.11,
+        "import": 0.19,
+        "reconcile_total": 0.19,
+        "engine_only": 0.11
+      }
+    },
+    {
+      "dataset": "holdout_seed7_collide",
+      "seed": 7,
+      "profile": "collide",
+      "rows_target": 3000,
+      "as_of": "2026-04-13",
+      "generated": {
+        "ledger": 2964,
+        "psp": 2967,
+        "bank": 552,
+        "batches": 549
+      },
+      "imports": {
+        "ledger": {
+          "status": "LOADED",
+          "read": 2964,
+          "loaded": 2964,
+          "quarantined": 0
+        },
+        "psp": {
+          "status": "LOADED",
+          "read": 2967,
+          "loaded": 2967,
+          "quarantined": 0
+        },
+        "bank": {
+          "status": "LOADED",
+          "read": 552,
+          "loaded": 552,
+          "quarantined": 0
+        }
+      },
+      "chain_a": {
+        "auto_matched_groups": 2887,
+        "false_matches": 0,
+        "false_match_denominator": 2887,
+        "false_match_rate": 0.0,
+        "clean_pairs": 2887,
+        "clean_pairs_auto_matched": 2887,
+        "coverage_clean": 1.0,
+        "truth_pairs_total": 2932,
+        "coverage_all_truth_pairs": 0.9847,
+        "anomalous_pairs_auto_matched": {},
+        "truth_labels": {
+          "clean": 2887,
+          "missing_psp": 32,
+          "missing_ledger": 35,
+          "date_shift": 28,
+          "amount_diff": 17
+        }
+      },
+      "chain_b": {
+        "auto_matched_groups": 503,
+        "false_matches": 0,
+        "false_match_denominator": 503,
+        "false_match_rate": 0.0,
+        "false_match_rules": {},
+        "v1_matchable_truth_groups": 503,
+        "v1_matchable_matched_exactly": 503,
+        "coverage_v1_matchable": 1.0,
+        "by_truth_label": {
+          "clean_noref": {
+            "truth_groups": 187,
+            "engine_exact": 187
+          },
+          "clean_ref": {
+            "truth_groups": 272,
+            "engine_exact": 272
+          },
+          "late_bank": {
+            "truth_groups": 4,
+            "engine_exact": 0
+          },
+          "merge": {
+            "truth_groups": 23,
+            "engine_exact": 23
+          },
+          "missing_bank": {
+            "truth_groups": 16,
+            "engine_exact": 0
+          },
+          "partial": {
+            "truth_groups": 3,
+            "engine_exact": 0
+          },
+          "split": {
+            "truth_groups": 21,
+            "engine_exact": 21
+          }
+        },
+        "groups_by_rule": {
+          "B3_AMOUNT_DATE_UNIQUE": 187,
+          "B1_REF_1TO1": 272,
+          "B2S_REF_SPLIT": 21,
+          "B2M_REF_MERGED": 23
+        },
+        "settlement_status": {
+          "MATCHED": 526,
+          "PARTIAL_RECEIPT": 3,
+          "MISSING_IN_BANK": 16,
+          "DATE_OUT_OF_WINDOW": 4
+        },
+        "noise_bank_lines": 10
+      },
+      "unresolved_by_type": {
+        "A:AMOUNT_MISMATCH": 17,
+        "A:DATE_OUT_OF_TOLERANCE": 28,
+        "A:MISSING_IN_LEDGER": 35,
+        "A:MISSING_IN_PSP": 32,
+        "B:DATE_OUT_OF_WINDOW": 4,
+        "B:MISSING_IN_BANK": 16,
+        "B:PARTIAL_RECEIPT": 3,
+        "B:UNEXPECTED_BANK_CREDIT": 10
+      },
+      "elapsed_s": {
+        "generate": 0.06,
+        "import": 0.18,
+        "reconcile_total": 0.19,
+        "engine_only": 0.1
+      }
+    },
+    {
+      "dataset": "holdout_seed2027_messy",
+      "seed": 2027,
+      "profile": "messy",
+      "rows_target": 3000,
+      "as_of": "2026-04-13",
+      "generated": {
+        "ledger": 2905,
+        "psp": 2899,
+        "bank": 560,
+        "batches": 551
+      },
+      "imports": {
+        "ledger": {
+          "status": "LOADED",
+          "read": 2905,
+          "loaded": 2905,
+          "quarantined": 0
+        },
+        "psp": {
+          "status": "LOADED",
+          "read": 2899,
+          "loaded": 2899,
+          "quarantined": 0
+        },
+        "bank": {
+          "status": "LOADED",
+          "read": 560,
+          "loaded": 560,
+          "quarantined": 0
+        }
+      },
+      "chain_a": {
+        "auto_matched_groups": 2652,
+        "false_matches": 0,
+        "false_match_denominator": 2652,
+        "false_match_rate": 0.0,
+        "clean_pairs": 2652,
+        "clean_pairs_auto_matched": 2652,
+        "coverage_clean": 1.0,
+        "truth_pairs_total": 2805,
+        "coverage_all_truth_pairs": 0.9455,
+        "anomalous_pairs_auto_matched": {},
+        "truth_labels": {
+          "clean": 2652,
+          "missing_psp": 100,
+          "amount_diff": 67,
+          "missing_ledger": 94,
+          "date_shift": 86
+        }
+      },
+      "chain_b": {
+        "auto_matched_groups": 468,
+        "false_matches": 0,
+        "false_match_denominator": 468,
+        "false_match_rate": 0.0,
+        "false_match_rules": {},
+        "v1_matchable_truth_groups": 468,
+        "v1_matchable_matched_exactly": 468,
+        "coverage_v1_matchable": 1.0,
+        "by_truth_label": {
+          "clean_noref": {
+            "truth_groups": 83,
+            "engine_exact": 83
+          },
+          "clean_ref": {
+            "truth_groups": 294,
+            "engine_exact": 294
+          },
+          "late_bank": {
+            "truth_groups": 8,
+            "engine_exact": 0
+          },
+          "merge": {
+            "truth_groups": 52,
+            "engine_exact": 52
+          },
+          "missing_bank": {
+            "truth_groups": 12,
+            "engine_exact": 0
+          },
+          "partial": {
+            "truth_groups": 11,
+            "engine_exact": 0
+          },
+          "split": {
+            "truth_groups": 39,
+            "engine_exact": 39
+          }
+        },
+        "groups_by_rule": {
+          "B1_REF_1TO1": 294,
+          "B2S_REF_SPLIT": 39,
+          "B3_AMOUNT_DATE_UNIQUE": 83,
+          "B2M_REF_MERGED": 52
+        },
+        "settlement_status": {
+          "MATCHED": 520,
+          "PARTIAL_RECEIPT": 11,
+          "MISSING_IN_BANK": 12,
+          "DATE_OUT_OF_WINDOW": 8
+        },
+        "noise_bank_lines": 16
+      },
+      "unresolved_by_type": {
+        "A:AMOUNT_MISMATCH": 67,
+        "A:DATE_OUT_OF_TOLERANCE": 86,
+        "A:MISSING_IN_LEDGER": 94,
+        "A:MISSING_IN_PSP": 100,
+        "B:DATE_OUT_OF_WINDOW": 8,
+        "B:MISSING_IN_BANK": 12,
+        "B:PARTIAL_RECEIPT": 11,
+        "B:UNEXPECTED_BANK_CREDIT": 16
+      },
+      "elapsed_s": {
+        "generate": 0.06,
+        "import": 0.19,
+        "reconcile_total": 0.19,
+        "engine_only": 0.1
+      }
+    },
+    {
+      "dataset": "holdout_seed99_adversarial",
+      "seed": 99,
+      "profile": "adversarial",
+      "rows_target": 3000,
+      "as_of": "2026-04-13",
+      "generated": {
+        "ledger": 2975,
+        "psp": 2967,
+        "bank": 2970,
+        "batches": 2967
+      },
+      "imports": {
+        "ledger": {
+          "status": "LOADED",
+          "read": 2975,
+          "loaded": 2975,
+          "quarantined": 0
+        },
+        "psp": {
+          "status": "LOADED",
+          "read": 2967,
+          "loaded": 2967,
+          "quarantined": 0
+        },
+        "bank": {
+          "status": "LOADED",
+          "read": 2970,
+          "loaded": 2970,
+          "quarantined": 0
+        }
+      },
+      "chain_a": {
+        "auto_matched_groups": 2901,
+        "false_matches": 0,
+        "false_match_denominator": 2901,
+        "false_match_rate": 0.0,
+        "clean_pairs": 2901,
+        "clean_pairs_auto_matched": 2901,
+        "coverage_clean": 1.0,
+        "truth_pairs_total": 2942,
+        "coverage_all_truth_pairs": 0.9861,
+        "anomalous_pairs_auto_matched": {},
+        "truth_labels": {
+          "clean": 2901,
+          "missing_psp": 33,
+          "missing_ledger": 25,
+          "amount_diff": 15,
+          "date_shift": 26
+        }
+      },
+      "chain_b": {
+        "auto_matched_groups": 1285,
+        "false_matches": 0,
+        "false_match_denominator": 1285,
+        "false_match_rate": 0.0,
+        "false_match_rules": {},
+        "v1_matchable_truth_groups": 2714,
+        "v1_matchable_matched_exactly": 1285,
+        "coverage_v1_matchable": 0.4735,
+        "by_truth_label": {
+          "clean_noref": {
+            "truth_groups": 1461,
+            "engine_exact": 32
+          },
+          "clean_ref": {
+            "truth_groups": 1146,
+            "engine_exact": 1146
+          },
+          "late_bank": {
+            "truth_groups": 67,
+            "engine_exact": 0
+          },
+          "merge": {
+            "truth_groups": 60,
+            "engine_exact": 60
+          },
+          "missing_bank": {
+            "truth_groups": 96,
+            "engine_exact": 0
+          },
+          "partial": {
+            "truth_groups": 30,
+            "engine_exact": 0
+          },
+          "split": {
+            "truth_groups": 47,
+            "engine_exact": 47
+          }
+        },
+        "groups_by_rule": {
+          "B1_REF_1TO1": 1146,
+          "B2S_REF_SPLIT": 47,
+          "B2M_REF_MERGED": 60,
+          "B3_AMOUNT_DATE_UNIQUE": 32
+        },
+        "settlement_status": {
+          "DATE_OUT_OF_WINDOW": 67,
+          "AMBIGUOUS_CANDIDATES": 1521,
+          "MATCHED": 1345,
+          "PARTIAL_RECEIPT": 30,
+          "MISSING_IN_BANK": 4
+        },
+        "noise_bank_lines": 89
+      },
+      "unresolved_by_type": {
+        "A:AMOUNT_MISMATCH": 15,
+        "A:DATE_OUT_OF_TOLERANCE": 26,
+        "A:MISSING_IN_LEDGER": 25,
+        "A:MISSING_IN_PSP": 33,
+        "B:AMBIGUOUS_CANDIDATES": 1521,
+        "B:DATE_OUT_OF_WINDOW": 67,
+        "B:MISSING_IN_BANK": 4,
+        "B:PARTIAL_RECEIPT": 30,
+        "B:UNEXPECTED_BANK_CREDIT": 4
+      },
+      "elapsed_s": {
+        "generate": 0.09,
+        "import": 0.24,
+        "reconcile_total": 1.02,
+        "engine_only": 0.82
+      }
+    },
+    {
+      "dataset": "scale_seed42_default_30k",
+      "seed": 42,
+      "profile": "default",
+      "rows_target": 30000,
+      "as_of": "2026-04-13",
+      "generated": {
+        "ledger": 29699,
+        "psp": 29692,
+        "bank": 572,
+        "batches": 566
+      },
+      "imports": {
+        "ledger": {
+          "status": "LOADED",
+          "read": 29699,
+          "loaded": 29699,
+          "quarantined": 0
+        },
+        "psp": {
+          "status": "LOADED",
+          "read": 29692,
+          "loaded": 29692,
+          "quarantined": 0
+        },
+        "bank": {
+          "status": "LOADED",
+          "read": 572,
+          "loaded": 572,
+          "quarantined": 0
+        }
+      },
+      "chain_a": {
+        "auto_matched_groups": 28947,
+        "false_matches": 0,
+        "false_match_denominator": 28947,
+        "false_match_rate": 0.0,
+        "clean_pairs": 28947,
+        "clean_pairs_auto_matched": 28947,
+        "coverage_clean": 1.0,
+        "truth_pairs_total": 29392,
+        "coverage_all_truth_pairs": 0.9849,
+        "anomalous_pairs_auto_matched": {},
+        "truth_labels": {
+          "clean": 28947,
+          "missing_psp": 307,
+          "missing_ledger": 300,
+          "date_shift": 295,
+          "amount_diff": 150
+        }
+      },
+      "chain_b": {
+        "auto_matched_groups": 533,
+        "false_matches": 0,
+        "false_match_denominator": 533,
+        "false_match_rate": 0.0,
+        "false_match_rules": {},
+        "v1_matchable_truth_groups": 533,
+        "v1_matchable_matched_exactly": 533,
+        "coverage_v1_matchable": 1.0,
+        "by_truth_label": {
+          "clean_noref": {
+            "truth_groups": 50,
+            "engine_exact": 50
+          },
+          "clean_ref": {
+            "truth_groups": 440,
+            "engine_exact": 440
+          },
+          "late_bank": {
+            "truth_groups": 1,
+            "engine_exact": 0
+          },
+          "merge": {
+            "truth_groups": 24,
+            "engine_exact": 24
+          },
+          "missing_bank": {
+            "truth_groups": 7,
+            "engine_exact": 0
+          },
+          "partial": {
+            "truth_groups": 1,
+            "engine_exact": 0
+          },
+          "split": {
+            "truth_groups": 19,
+            "engine_exact": 19
+          }
+        },
+        "groups_by_rule": {
+          "B1_REF_1TO1": 440,
+          "B3_AMOUNT_DATE_UNIQUE": 50,
+          "B2S_REF_SPLIT": 19,
+          "B2M_REF_MERGED": 24
+        },
+        "settlement_status": {
+          "MISSING_IN_BANK": 7,
+          "MATCHED": 557,
+          "PARTIAL_RECEIPT": 1,
+          "DATE_OUT_OF_WINDOW": 1
+        },
+        "noise_bank_lines": 5
+      },
+      "unresolved_by_type": {
+        "A:AMOUNT_MISMATCH": 150,
+        "A:DATE_OUT_OF_TOLERANCE": 295,
+        "A:MISSING_IN_LEDGER": 300,
+        "A:MISSING_IN_PSP": 307,
+        "B:DATE_OUT_OF_WINDOW": 1,
+        "B:MISSING_IN_BANK": 7,
+        "B:PARTIAL_RECEIPT": 1,
+        "B:UNEXPECTED_BANK_CREDIT": 5
+      },
+      "elapsed_s": {
+        "generate": 0.72,
+        "import": 1.94,
+        "reconcile_total": 2.06,
+        "engine_only": 1.11
+      }
+    }
+  ]
+}
