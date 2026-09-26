@@ -172,3 +172,26 @@ def test_source_records_are_append_only(conn):
         conn.execute("UPDATE ledger_records SET gross_minor=1")
     with pytest.raises(sqlite3.IntegrityError):
         conn.execute("DELETE FROM ledger_records")
+
+
+# ---------------------------------------------------------------- reviewer finding R2 (defect D-09)
+def test_identifier_delimiters_rejected_no_identity_confusion(conn):
+    """(merchant 'A', ref 'B|C') and (merchant 'A|B', ref 'C') must never be confused. v1 rejects reserved
+    characters in identifiers explicitly (BAD_IDENTIFIER) instead of silently merging or false-conflicting."""
+    r = import_bytes(conn, "ledger", csv_bytes(LEDGER_H, [
+        "L1,SALE,B|C,,A,SGD,1000.00,2026-07-01,", "L2,SALE,C,,A|B,SGD,1000.00,2026-07-01,",
+        "L3,SALE,ORD 9,,A,SGD,1.00,2026-07-01,", "L4,SALE,X;Y,,A,SGD,1.00,2026-07-01,",
+        "L5,SALE,OK-1,,A,SGD,1.00,2026-07-01,"]), "l.csv")
+    assert [i["code"] for i in r.issues] == ["BAD_IDENTIFIER"] * 4
+    assert r.rows_loaded == 1 and not any(i["code"].startswith("CONFLICT") for i in r.issues)
+    r = import_bytes(conn, "bank", csv_bytes(BANK_H, ["K|1,BK1,SGD,1.00,2026-07-01,x,", "K2,BK 1,SGD,1.00,2026-07-01,x,"]), "b.csv")
+    assert [i["code"] for i in r.issues] == ["BAD_IDENTIFIER"] * 2
+
+
+def test_business_key_encoding_is_collision_safe():
+    from recon.ingest import business_key
+    a = business_key("ledger", {"merchant_account": "A", "business_ref": "B|C"})
+    b = business_key("ledger", {"merchant_account": "A|B", "business_ref": "C"})
+    c = business_key("ledger", {"merchant_account": "A-B", "business_ref": "C"})
+    d = business_key("ledger", {"merchant_account": "A", "business_ref": "B-C"})
+    assert len({a, b, c, d}) == 4

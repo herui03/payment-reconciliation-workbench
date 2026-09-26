@@ -1,0 +1,284 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EOD Reconciliation Report — 2026-07-10</title>
+<style>
+  :root { --ink:#1b2430; --muted:#5b6675; --line:#dde3ea; --bg:#f6f8fa; --ok:#1f7a4d; --warn:#9a6700; --bad:#b42318; }
+  body { font: 14px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; color: var(--ink); margin: 24px auto; max-width: 1100px; padding: 0 16px; background: #fff; }
+  h1 { font-size: 22px; margin: 0 0 4px; } h2 { font-size: 17px; margin: 28px 0 8px; border-bottom: 1px solid var(--line); padding-bottom: 4px; }
+  h3 { font-size: 14px; margin: 16px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+  .meta { color: var(--muted); font-size: 13px; }
+  .banner { background: #fff8e6; border: 1px solid #f0d58c; padding: 8px 12px; border-radius: 6px; font-size: 13px; margin: 12px 0; }
+  table { border-collapse: collapse; width: 100%; margin: 6px 0 12px; font-size: 13px; }
+  th, td { border-bottom: 1px solid var(--line); padding: 5px 8px; text-align: left; vertical-align: top; }
+  th { background: var(--bg); font-weight: 600; }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .ok { color: var(--ok); } .bad { color: var(--bad); } .warn { color: var(--warn); }
+  .small { font-size: 12px; color: var(--muted); }
+</style>
+</head>
+<body>
+<h1>End-of-day reconciliation report</h1>
+<div class="meta">As-of 2026-07-10 · Run #1 · Rules 2026.09-v1 · Run started 2026-09-26T04:36:24.074401Z · finished 2026-09-26T04:36:24.078061Z · 3 ms · Report generated 2026-09-26T04:36:24.982935Z</div>
+<div class="banner">Synthetic demo data only. Single-user local prototype: actor names are demo labels, not authenticated identities. Not a regulatory or audit-grade record. Amounts are shown per currency and never summed across currencies.</div>
+
+<h2>1. Input data scope</h2>
+<table>
+  <tr><th>Source</th><th class="num">Records loaded</th><th>Business date range</th><th class="num">Excluded (dated after as-of)</th></tr>
+  
+  <tr><td>ledger</td><td class="num">31</td><td>2026-07-01 … 2026-07-11</td><td class="num">1</td></tr>
+  
+  <tr><td>psp</td><td class="num">29</td><td>2026-07-01 … 2026-07-09</td><td class="num">0</td></tr>
+  
+  <tr><td>bank</td><td class="num">17</td><td>2026-07-03 … 2026-07-12</td><td class="num">1</td></tr>
+  
+</table>
+<h3>Files</h3>
+<table>
+  <tr><th>#</th><th>Source</th><th>File</th><th>SHA-256</th><th>Status</th><th class="num">Read</th><th class="num">Loaded</th><th class="num">Dup</th><th class="num">Quarantined</th></tr>
+  
+  <tr><td>1</td><td>ledger</td><td>ledger.csv</td><td><code>98a1cb744119</code></td>
+      <td class="warn">PARTIAL</td>
+      <td class="num">35</td><td class="num">30</td><td class="num">1</td><td class="num">4</td></tr>
+  
+  <tr><td>2</td><td>psp</td><td>psp.csv</td><td><code>13c82c6610d9</code></td>
+      <td class="warn">PARTIAL</td>
+      <td class="num">30</td><td class="num">29</td><td class="num">0</td><td class="num">1</td></tr>
+  
+  <tr><td>3</td><td>bank</td><td>bank.csv</td><td><code>c7f8f7ae69b5</code></td>
+      <td class="warn">PARTIAL</td>
+      <td class="num">19</td><td class="num">17</td><td class="num">1</td><td class="num">1</td></tr>
+  
+  <tr><td>4</td><td>ledger</td><td>ledger.csv</td><td><code>98a1cb744119</code></td>
+      <td class="warn">DUPLICATE_FILE</td>
+      <td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td></tr>
+  
+  <tr><td>5</td><td>ledger</td><td>ledger_renamed_copy.csv</td><td><code>98a1cb744119</code></td>
+      <td class="warn">DUPLICATE_FILE</td>
+      <td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td></tr>
+  
+  <tr><td>6</td><td>bank</td><td>bank_missing_amount_column.csv</td><td><code>e47da9ec7811</code></td>
+      <td class="bad">REJECTED</td>
+      <td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td></tr>
+  
+  <tr><td>7</td><td>ledger</td><td>ledger_resend_overlap.csv</td><td><code>b33a4af83623</code></td>
+      <td class="ok">LOADED</td>
+      <td class="num">2</td><td class="num">1</td><td class="num">1</td><td class="num">0</td></tr>
+  
+</table>
+
+<h2>2. Chain A — ledger gross vs PSP transactions (gross)</h2>
+
+<h3>Ledger entries</h3>
+<table>
+  <tr><th>Currency</th><th class="num">Records</th><th class="num">Gross</th><th class="num">Matched</th><th class="num">Matched gross</th><th class="num">Not matched</th><th class="num">Not matched gross</th><th>Breakdown</th></tr>
+  
+  <tr><td>EUR</td><td class="num">7</td><td class="num">3,790.00</td>
+      <td class="num ok">6</td><td class="num">3,490.00</td>
+      <td class="num bad">1</td><td class="num">300.00</td>
+      <td class="small">CURRENCY_MISMATCH: 1 (300.00); MATCHED: 6 (3,490.00)</td></tr>
+  
+  <tr><td>SGD</td><td class="num">16</td><td class="num">8,299.00</td>
+      <td class="num ok">9</td><td class="num">7,145.00</td>
+      <td class="num bad">7</td><td class="num">1,154.00</td>
+      <td class="small">ACCOUNT_MISMATCH: 1 (50.00); DATE_OUT_OF_TOLERANCE: 1 (130.00); MATCHED: 9 (7,145.00); MISSING_IN_PSP: 1 (60.00); PENDING: 3 (164.00); SOURCE_CONFLICT: 1 (750.00)</td></tr>
+  
+  <tr><td>USD</td><td class="num">7</td><td class="num">2,435.00</td>
+      <td class="num ok">6</td><td class="num">1,935.00</td>
+      <td class="num bad">1</td><td class="num">500.00</td>
+      <td class="small">AMOUNT_MISMATCH: 1 (500.00); MATCHED: 6 (1,935.00)</td></tr>
+  
+</table>
+
+<h3>PSP charge/refund/fee items</h3>
+<table>
+  <tr><th>Currency</th><th class="num">Records</th><th class="num">Gross</th><th class="num">Matched</th><th class="num">Matched gross</th><th class="num">Not matched</th><th class="num">Not matched gross</th><th>Breakdown</th></tr>
+  
+  <tr><td>EUR</td><td class="num">6</td><td class="num">3,490.00</td>
+      <td class="num ok">6</td><td class="num">3,490.00</td>
+      <td class="num ">0</td><td class="num">0.00</td>
+      <td class="small">MATCHED: 6 (3,490.00)</td></tr>
+  
+  <tr><td>SGD</td><td class="num">14</td><td class="num">8,139.00</td>
+      <td class="num ok">9</td><td class="num">7,145.00</td>
+      <td class="num bad">5</td><td class="num">994.00</td>
+      <td class="small">ACCOUNT_MISMATCH: 1 (50.00); DATE_OUT_OF_TOLERANCE: 1 (130.00); MATCHED: 9 (7,145.00); MISSING_IN_LEDGER: 1 (64.00); OUT_OF_SCOPE: 1 (0.00); SOURCE_CONFLICT: 1 (750.00)</td></tr>
+  
+  <tr><td>USD</td><td class="num">9</td><td class="num">2,765.00</td>
+      <td class="num ok">6</td><td class="num">1,935.00</td>
+      <td class="num bad">3</td><td class="num">830.00</td>
+      <td class="small">AMOUNT_MISMATCH: 1 (450.00); CURRENCY_MISMATCH: 1 (300.00); MATCHED: 6 (1,935.00); MISSING_IN_LEDGER: 1 (80.00)</td></tr>
+  
+</table>
+
+
+<h2>3. Chain B — PSP settlement net vs bank</h2>
+
+<h3>Settlement batches (net)</h3>
+
+<table>
+  <tr><th>Currency</th><th class="num">Records</th><th class="num">Amount</th><th class="num">Matched</th><th class="num">Matched amount</th><th class="num">Not matched</th><th class="num">Not matched amount</th><th>Breakdown</th></tr>
+  
+  <tr><td>EUR</td><td class="num">6</td><td class="num">3,421.00</td>
+      <td class="num ok">1</td><td class="num">147.00</td>
+      <td class="num">5</td><td class="num">3,274.00</td>
+      <td class="small">AMBIGUOUS_CANDIDATES: 2 (980.00); MATCHED: 1 (147.00); PARTIAL_RECEIPT: 1 (2,000.00); SUGGESTED_GROUP: 2 (294.00)</td></tr>
+  
+  <tr><td>SGD</td><td class="num">7</td><td class="num">7,372.00</td>
+      <td class="num ok">5</td><td class="num">7,029.00</td>
+      <td class="num">2</td><td class="num">343.00</td>
+      <td class="small">ACCOUNT_MISMATCH: 1 (196.00); IN_TRANSIT: 1 (147.00); MATCHED: 5 (7,029.00)</td></tr>
+  
+  <tr><td>USD</td><td class="num">5</td><td class="num">2,260.10</td>
+      <td class="num ok">3</td><td class="num">1,969.10</td>
+      <td class="num">2</td><td class="num">291.00</td>
+      <td class="small">DATE_OUT_OF_WINDOW: 1 (194.00); MATCHED: 3 (1,969.10); MISSING_IN_BANK: 1 (97.00)</td></tr>
+  
+</table>
+
+
+<h3>Bank statement lines</h3>
+
+<table>
+  <tr><th>Currency</th><th class="num">Records</th><th class="num">Amount</th><th class="num">Matched</th><th class="num">Matched amount</th><th class="num">Not matched</th><th class="num">Not matched amount</th><th>Breakdown</th></tr>
+  
+  <tr><td>EUR</td><td class="num">4</td><td class="num">2,131.00</td>
+      <td class="num ok">1</td><td class="num">147.00</td>
+      <td class="num">3</td><td class="num">1,984.00</td>
+      <td class="small">AMBIGUOUS: 1 (490.00); HELD_FOR_REVIEW: 1 (1,200.00); MATCHED: 1 (147.00); SUGGESTED: 1 (294.00)</td></tr>
+  
+  <tr><td>SGD</td><td class="num">9</td><td class="num">7,300.55</td>
+      <td class="num ok">6</td><td class="num">7,029.00</td>
+      <td class="num">3</td><td class="num">271.55</td>
+      <td class="small">HELD_FOR_REVIEW: 1 (196.00); MATCHED: 6 (7,029.00); SOURCE_CONFLICT: 1 (20.00); UNEXPECTED_BANK_CREDIT: 1 (55.55)</td></tr>
+  
+  <tr><td>USD</td><td class="num">3</td><td class="num">2,163.10</td>
+      <td class="num ok">2</td><td class="num">1,969.10</td>
+      <td class="num">1</td><td class="num">194.00</td>
+      <td class="small">HELD_FOR_REVIEW: 1 (194.00); MATCHED: 2 (1,969.10)</td></tr>
+  
+</table>
+
+
+<h3>Unsettled PSP items (net, no batch as of date)</h3>
+
+<table>
+  <tr><th>Currency</th><th class="num">Records</th><th class="num">Amount</th><th class="num">Matched</th><th class="num">Matched amount</th><th class="num">Not matched</th><th class="num">Not matched amount</th><th>Breakdown</th></tr>
+  
+  <tr><td>SGD</td><td class="num">4</td><td class="num">577.22</td>
+      <td class="num ok">0</td><td class="num">0.00</td>
+      <td class="num">4</td><td class="num">577.22</td>
+      <td class="small">NOT_DUE: 3 (514.50); UNSETTLED_OVERDUE: 1 (62.72)</td></tr>
+  
+  <tr><td>USD</td><td class="num">3</td><td class="num">421.95</td>
+      <td class="num ok">0</td><td class="num">0.00</td>
+      <td class="num">3</td><td class="num">421.95</td>
+      <td class="small">NOT_DUE: 3 (421.95)</td></tr>
+  
+</table>
+
+
+<h3>Settlement bridge (PSP settled items: gross − fees = net). Links chain A gross to chain B net; not additive with either.</h3>
+<table>
+  <tr><th>Currency</th><th class="num">Batches</th><th class="num">Gross</th><th class="num">Fees</th><th class="num">Net</th></tr>
+  
+  <tr><td>EUR</td><td class="num">6</td><td class="num">3,490.00</td><td class="num">69.00</td><td class="num">3,421.00</td></tr>
+  
+  <tr><td>SGD</td><td class="num">7</td><td class="num">7,550.00</td><td class="num">178.00</td><td class="num">7,372.00</td></tr>
+  
+  <tr><td>USD</td><td class="num">5</td><td class="num">2,330.00</td><td class="num">69.90</td><td class="num">2,260.10</td></tr>
+  
+</table>
+<h3>Match groups by rule</h3>
+<table>
+  <tr><th>Chain</th><th>Rule</th><th>Currency</th><th class="num">Groups</th><th class="num">Amount (one side)</th></tr>
+  <tr><td>A</td><td>A1_EXACT_REF</td><td>EUR</td><td class="num">6</td><td class="num">3,490.00</td></tr><tr><td>A</td><td>A1_EXACT_REF</td><td>SGD</td><td class="num">9</td><td class="num">7,145.00</td></tr><tr><td>A</td><td>A1_EXACT_REF</td><td>USD</td><td class="num">6</td><td class="num">1,935.00</td></tr><tr><td>B</td><td>B1_REF_1TO1</td><td>SGD</td><td class="num">4</td><td class="num">2,029.00</td></tr><tr><td>B</td><td>B1_REF_1TO1</td><td>USD</td><td class="num">1</td><td class="num">514.10</td></tr><tr><td>B</td><td>B2M_REF_MERGED</td><td>USD</td><td class="num">1</td><td class="num">1,455.00</td></tr><tr><td>B</td><td>B2S_REF_SPLIT</td><td>SGD</td><td class="num">1</td><td class="num">5,000.00</td></tr><tr><td>B</td><td>B3_AMOUNT_DATE_UNIQUE</td><td>EUR</td><td class="num">1</td><td class="num">147.00</td></tr>
+</table>
+
+<div class="banner"><b>Case basis:</b> Live case workflow state at report generation (latest run, no later imports).</div>
+<h2>4. Unresolved exceptions (19) — overdue after 3 days: 14</h2>
+<table>
+  <tr><th>Chain</th><th>Type</th><th>Currency</th><th class="num">Open</th><th class="num">Absolute exposure</th></tr>
+  <tr><td>A</td><td>ACCOUNT_MISMATCH</td><td>SGD</td><td class="num">2</td><td class="num">100.00</td></tr><tr><td>A</td><td>AMOUNT_MISMATCH</td><td>USD</td><td class="num">1</td><td class="num">50.00</td></tr><tr><td>A</td><td>CURRENCY_MISMATCH</td><td>EUR</td><td class="num">1</td><td class="num">300.00</td></tr><tr><td>A</td><td>DATE_OUT_OF_TOLERANCE</td><td>SGD</td><td class="num">1</td><td class="num">130.00</td></tr><tr><td>A</td><td>MISSING_IN_LEDGER</td><td>SGD</td><td class="num">1</td><td class="num">64.00</td></tr><tr><td>A</td><td>MISSING_IN_LEDGER</td><td>USD</td><td class="num">1</td><td class="num">80.00</td></tr><tr><td>A</td><td>MISSING_IN_PSP</td><td>SGD</td><td class="num">1</td><td class="num">60.00</td></tr><tr><td>A</td><td>SOURCE_CONFLICT</td><td>SGD</td><td class="num">1</td><td class="num">750.00</td></tr><tr><td>B</td><td>ACCOUNT_MISMATCH</td><td>SGD</td><td class="num">1</td><td class="num">196.00</td></tr><tr><td>B</td><td>AMBIGUOUS_CANDIDATES</td><td>EUR</td><td class="num">2</td><td class="num">980.00</td></tr><tr><td>B</td><td>DATE_OUT_OF_WINDOW</td><td>USD</td><td class="num">1</td><td class="num">194.00</td></tr><tr><td>B</td><td>MISSING_IN_BANK</td><td>USD</td><td class="num">1</td><td class="num">97.00</td></tr><tr><td>B</td><td>PARTIAL_RECEIPT</td><td>EUR</td><td class="num">1</td><td class="num">800.00</td></tr><tr><td>B</td><td>SOURCE_CONFLICT</td><td>SGD</td><td class="num">1</td><td class="num">20.00</td></tr><tr><td>B</td><td>SUGGESTED_GROUP</td><td>EUR</td><td class="num">2</td><td class="num">294.00</td></tr><tr><td>B</td><td>UNSETTLED_OVERDUE</td><td>SGD</td><td class="num">1</td><td class="num">62.72</td></tr>
+</table>
+<table>
+  <tr><th>ID</th><th>Type</th><th>Subject</th><th>Status</th><th>Owner</th><th class="num">Amount</th><th class="num">Age (d)</th><th>Explanation</th></tr>
+  
+  <tr><td>1</td><td>CURRENCY_MISMATCH</td><td>MER-EU-01|ORD-1013</td><td>Open</td><td>—</td>
+      <td class="num">300.00 EUR</td><td class="num ">3</td><td class="small">Same reference but currency differs: ledger 300.00 EUR vs PSP 300.00 USD. No FX conversion in v1.</td></tr>
+  
+  <tr><td>2</td><td>SOURCE_CONFLICT</td><td>MER-SG-01|ORD-1010</td><td>Open</td><td>—</td>
+      <td class="num">750.00 SGD</td><td class="num bad">4 ⚑</td><td class="small">Business reference ORD-1010 has conflicting source rows (same key, different content). Blocked from auto-matching until the source is corrected.</td></tr>
+  
+  <tr><td>3</td><td>MISSING_IN_LEDGER</td><td>MER-SG-01|ORD-1011</td><td>Open</td><td>—</td>
+      <td class="num">-64.00 SGD</td><td class="num bad">8 ⚑</td><td class="small">PSP charge ORD-1011 64.00 SGD on 2026-07-02 has no ledger entry after 8 days. Note: a ledger row for ORD-1011 was quarantined (BAD_AMOUNT, file 98a1cb744119 row 13).</td></tr>
+  
+  <tr><td>4</td><td>DATE_OUT_OF_TOLERANCE</td><td>MER-SG-01|ORD-1016</td><td>Open</td><td>—</td>
+      <td class="num">130.00 SGD</td><td class="num bad">9 ⚑</td><td class="small">Reference and amount agree but dates differ by 3 days (ledger 2026-07-01, PSP 2026-07-04); tolerance is 2 days.</td></tr>
+  
+  <tr><td>5</td><td>MISSING_IN_PSP</td><td>MER-SG-01|ORD-1021</td><td>Open</td><td>—</td>
+      <td class="num">60.00 SGD</td><td class="num bad">7 ⚑</td><td class="small">Ledger SALE ORD-1021 60.00 SGD on 2026-07-03 has no PSP item after 7 days.</td></tr>
+  
+  <tr><td>6</td><td>ACCOUNT_MISMATCH</td><td>MER-SG-01|ORD-1032</td><td>Open</td><td>—</td>
+      <td class="num">50.00 SGD</td><td class="num bad">6 ⚑</td><td class="small">Ledger ORD-1032 is booked under merchant MER-SG-01, but the PSP reports this reference only under merchant(s) MER-SG-02. Accounts are never crossed, so nothing is matched.</td></tr>
+  
+  <tr><td>7</td><td>ACCOUNT_MISMATCH</td><td>MER-SG-02|ORD-1032</td><td>Open</td><td>—</td>
+      <td class="num">-50.00 SGD</td><td class="num bad">6 ⚑</td><td class="small">PSP ORD-1032 is reported under merchant MER-SG-02, but the ledger books this reference only under merchant(s) MER-SG-01. Accounts are never crossed, so nothing is matched.</td></tr>
+  
+  <tr><td>8</td><td>AMOUNT_MISMATCH</td><td>MER-US-01|ORD-1002</td><td>Open</td><td>—</td>
+      <td class="num">50.00 USD</td><td class="num bad">9 ⚑</td><td class="small">Same reference; ledger gross 500.00 USD vs PSP gross 450.00 USD: difference 50.00 USD (ledger minus PSP). Exact amount required; no tolerance applied.</td></tr>
+  
+  <tr><td>9</td><td>MISSING_IN_LEDGER</td><td>MER-US-01|ORD-1022</td><td>Open</td><td>—</td>
+      <td class="num">-80.00 USD</td><td class="num bad">9 ⚑</td><td class="small">PSP charge ORD-1022 80.00 USD on 2026-07-01 has no ledger entry after 9 days.</td></tr>
+  
+  <tr><td>11</td><td>SOURCE_CONFLICT</td><td>B-018</td><td>Open</td><td>—</td>
+      <td class="num">20.00 SGD</td><td class="num ">1</td><td class="small">Bank line B-018 has conflicting source rows (same id, different content); blocked.</td></tr>
+  
+  <tr><td>12</td><td>UNSETTLED_OVERDUE</td><td>PSP-1011</td><td>Open</td><td>—</td>
+      <td class="num">62.72 SGD</td><td class="num bad">7 ⚑</td><td class="small">PSP item PSP-1011 (charge, net 62.72 SGD) was available on 2026-07-03 but is in no settlement batch 7d later.</td></tr>
+  
+  <tr><td>13</td><td>PARTIAL_RECEIPT</td><td>STL-EU-0705</td><td>In review</td><td>ops.analyst</td>
+      <td class="num">800.00 EUR</td><td class="num bad">5 ⚑</td><td class="small">Received 1,200.00 EUR across 1 line(s) referencing STL-EU-0705 against net 2,000.00 EUR; outstanding 800.00 EUR. Not matched until amounts conserve.</td></tr>
+  
+  <tr><td>14</td><td>SUGGESTED_GROUP</td><td>STL-EU-0706A</td><td>Open</td><td>—</td>
+      <td class="num">98.00 EUR</td><td class="num bad">4 ⚑</td><td class="small">Amount-only N:1 combination found: settlements STL-EU-0706A (98.00) + STL-EU-0706B (196.00) = bank B-011 (294.00) EUR. No reference evidence, so this is a suggestion for review, not a match.</td></tr>
+  
+  <tr><td>15</td><td>SUGGESTED_GROUP</td><td>STL-EU-0706B</td><td>Open</td><td>—</td>
+      <td class="num">196.00 EUR</td><td class="num bad">4 ⚑</td><td class="small">Amount-only N:1 combination found: settlements STL-EU-0706A (98.00) + STL-EU-0706B (196.00) = bank B-011 (294.00) EUR. No reference evidence, so this is a suggestion for review, not a match.</td></tr>
+  
+  <tr><td>16</td><td>AMBIGUOUS_CANDIDATES</td><td>STL-EU-0707A</td><td>Open</td><td>—</td>
+      <td class="num">490.00 EUR</td><td class="num ">3</td><td class="small">Settlement STL-EU-0707A net 490.00 EUR has 1 same-amount bank line(s) in window (B-007) competing with settlement(s) STL-EU-0707B; no reference to disambiguate, so nothing is auto-matched.</td></tr>
+  
+  <tr><td>17</td><td>AMBIGUOUS_CANDIDATES</td><td>STL-EU-0707B</td><td>Open</td><td>—</td>
+      <td class="num">490.00 EUR</td><td class="num ">3</td><td class="small">Settlement STL-EU-0707B net 490.00 EUR has 1 same-amount bank line(s) in window (B-007) competing with settlement(s) STL-EU-0707A; no reference to disambiguate, so nothing is auto-matched.</td></tr>
+  
+  <tr><td>18</td><td>ACCOUNT_MISMATCH</td><td>STL-SG-0707</td><td>Open</td><td>—</td>
+      <td class="num">196.00 SGD</td><td class="num ">3</td><td class="small">Bank line reference names settlement STL-SG-0707 (expected BANK-SG-001/SGD) but B-009 is BANK-SG-002/SGD. Accounts and currencies are never crossed.</td></tr>
+  
+  <tr><td>19</td><td>DATE_OUT_OF_WINDOW</td><td>STL-US-0703</td><td>Open</td><td>—</td>
+      <td class="num">194.00 USD</td><td class="num bad">7 ⚑</td><td class="small">Referencing bank line(s) sum to the settlement net 194.00 USD but value date(s) 2026-07-07 fall outside settlement date 2026-07-03 -1/+3d.</td></tr>
+  
+  <tr><td>20</td><td>MISSING_IN_BANK</td><td>STL-US-0704</td><td>Open</td><td>—</td>
+      <td class="num">97.00 USD</td><td class="num bad">6 ⚑</td><td class="small">Settlement STL-US-0704 net 97.00 USD to BANK-US-001 (settlement date 2026-07-04) has no bank line 6d later (window +3d).</td></tr>
+  
+</table>
+
+<h3>Resolved manually but still reported by the engine (1) — not counted as matched</h3>
+<table>
+  <tr><th>ID</th><th>Type</th><th>Subject</th><th>Disposition</th><th>Reason</th></tr>
+  <tr><td>10</td><td>UNEXPECTED_BANK_CREDIT</td><td>B-015</td><td>NO_ACTION_REQUIRED</td><td>Bank interest, booked by treasury</td></tr>
+</table>
+
+
+<h2>5. Data quality</h2>
+<p>Quarantined rows: <b>6</b> · Duplicate rows skipped: <b>3</b> · Rejected / duplicate files: <b>3</b></p>
+<table>
+  <tr><th>Source</th><th>File</th><th>Row</th><th>Reason</th><th>Detail</th></tr>
+  <tr><td>ledger</td><td>ledger.csv <code>98a1cb744119</code></td><td>12</td><td>CONFLICT_RECORD_ID</td><td class="small">record L-1010 already loaded with different content</td></tr><tr><td>ledger</td><td>ledger.csv <code>98a1cb744119</code></td><td>13</td><td>BAD_AMOUNT</td><td class="small">&#39;gross_amount&#39;: not a plain decimal amount: &#39;64.0O&#39;</td></tr><tr><td>ledger</td><td>ledger.csv <code>98a1cb744119</code></td><td>14</td><td>BAD_DATE</td><td class="small">&#39;event_date&#39;=&#39;2026-13-01&#39; is not a valid YYYY-MM-DD date</td></tr><tr><td>ledger</td><td>ledger.csv <code>98a1cb744119</code></td><td>27</td><td>BAD_AMOUNT</td><td class="small">&#39;gross_amount&#39;: &#39;10.005&#39; has more than 2 decimal places for SGD; not rounded</td></tr><tr><td>psp</td><td>psp.csv <code>13c82c6610d9</code></td><td>29</td><td>NET_MISMATCH</td><td class="small">net_amount 9700 != gross_amount 10000 - fee_amount 200 (minor units)</td></tr><tr><td>bank</td><td>bank.csv <code>c7f8f7ae69b5</code></td><td>20</td><td>CONFLICT_RECORD_ID</td><td class="small">record B-018 already loaded with different content</td></tr>
+  <tr><td>ledger</td><td>ledger.csv <code>98a1cb744119</code></td><td>—</td><td>DUPLICATE_FILE</td><td class="small">identical content already imported as import #1 (ledger: ledger.csv); nothing loaded</td></tr><tr><td>ledger</td><td>ledger_renamed_copy.csv <code>98a1cb744119</code></td><td>—</td><td>DUPLICATE_FILE</td><td class="small">identical content already imported as import #1 (ledger: ledger.csv); nothing loaded</td></tr><tr><td>bank</td><td>bank_missing_amount_column.csv <code>e47da9ec7811</code></td><td>—</td><td>REJECTED</td><td class="small">missing required column(s) for bank: amount; whole file rejected</td></tr>
+</table>
+<p class="small">Rules version 2026.09-v1. Rule parameters: {&#39;a_date_tolerance_days&#39;: 2, &#39;a_grace_days&#39;: 2, &#39;b_window_after&#39;: 3, &#39;b_window_before&#39;: 1, &#39;max_candidates&#39;: 12, &#39;max_group_size&#39;: 4, &#39;max_ref_group&#39;: 10, &#39;unsettled_grace_days&#39;: 2}. Engine time 1 ms.</p>
+</body>
+</html>

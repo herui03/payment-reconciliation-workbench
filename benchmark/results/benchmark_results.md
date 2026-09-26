@@ -6,11 +6,11 @@ Denominators: see `tests/evaluation/benchmark.py` docstring and `docs/matching-r
 
 | dataset | profile | seed | ledger / psp / bank rows | A auto-matched | A false (÷ auto) | A coverage clean | B auto groups | B false (÷ auto) | B coverage v1-matchable | import s | reconcile s |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| dev_seed42_default | default | 42 | 2973 / 2973 / 566 | 2899 | 0 / 2899 | 2899 / 2899 (100.0%) | 512 | 0 / 512 | 512 / 512 (100.0%) | 0.19 | 0.19 |
-| holdout_seed7_collide | collide | 7 | 2964 / 2967 / 552 | 2887 | 0 / 2887 | 2887 / 2887 (100.0%) | 503 | 0 / 503 | 503 / 503 (100.0%) | 0.18 | 0.19 |
-| holdout_seed2027_messy | messy | 2027 | 2905 / 2899 / 560 | 2652 | 0 / 2652 | 2652 / 2652 (100.0%) | 468 | 0 / 468 | 468 / 468 (100.0%) | 0.19 | 0.19 |
-| holdout_seed99_adversarial | adversarial | 99 | 2975 / 2967 / 2970 | 2901 | 0 / 2901 | 2901 / 2901 (100.0%) | 1285 | 0 / 1285 | 1285 / 2714 (47.3%) | 0.24 | 1.02 |
-| scale_seed42_default_30k | default | 42 | 29699 / 29692 / 572 | 28947 | 0 / 28947 | 28947 / 28947 (100.0%) | 533 | 0 / 533 | 533 / 533 (100.0%) | 1.94 | 2.06 |
+| dev_seed42_default | default | 42 | 2973 / 2973 / 566 | 2899 | 0 / 2899 | 2899 / 2899 (100.0%) | 512 | 0 / 512 | 512 / 512 (100.0%) | 0.22 | 0.19 |
+| holdout_seed7_collide | collide | 7 | 2964 / 2967 / 552 | 2887 | 0 / 2887 | 2887 / 2887 (100.0%) | 503 | 0 / 503 | 503 / 503 (100.0%) | 0.22 | 0.2 |
+| holdout_seed2027_messy | messy | 2027 | 2905 / 2899 / 560 | 2652 | 0 / 2652 | 2652 / 2652 (100.0%) | 468 | 0 / 468 | 468 / 468 (100.0%) | 0.23 | 0.26 |
+| holdout_seed99_adversarial | adversarial | 99 | 2975 / 2967 / 2970 | 2901 | 0 / 2901 | 2901 / 2901 (100.0%) | 1285 | 0 / 1285 | 1285 / 2714 (47.3%) | 0.26 | 1.0 |
+| scale_seed42_default_30k | default | 42 | 29699 / 29692 / 572 | 28947 | 0 / 28947 | 28947 / 28947 (100.0%) | 533 | 0 / 533 | 533 / 533 (100.0%) | 2.13 | 1.98 |
 
 ## dev_seed42_default
 

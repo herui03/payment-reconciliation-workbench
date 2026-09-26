@@ -39,6 +39,9 @@
   </div>
 </div>
 
+{% if d and not d.live_cases %}
+<div class="flash warn" id="snapshot-banner"><b>Figures below are a snapshot of run #{{ run.run_id }}.</b> {{ d.case_basis }}{% if d.later_imports %} Reconcile again to include the {{ d.later_imports }} newer import(s).{% endif %}</div>
+{% endif %}
 {% if d %}
 <div class="kpis">
   <div class="kpi"><div class="l">Latest run</div><div class="v">#{{ run.run_id }}</div><div class="small muted">as-of {{ run.as_of }} · {{ run.elapsed_ms }} ms</div></div>

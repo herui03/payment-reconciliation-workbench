@@ -20,7 +20,7 @@
 </style>
 </head>
 <body>
-<h1>End-of-day reconciliation report</h1>
+<h1>{{ 'End-of-day reconciliation report' if d.live_cases else 'Historical run report (snapshot)' }}</h1>
 <div class="meta">As-of {{ d.as_of }} · Run #{{ d.run.run_id }} · Rules {{ d.rules_version }} · Run started {{ d.run.started_at }} · finished {{ d.run.finished_at }} · {{ d.run.elapsed_ms }} ms · Report generated {{ d.generated_at }}</div>
 <div class="banner">Synthetic demo data only. Single-user local prototype: actor names are demo labels, not authenticated identities. Not a regulatory or audit-grade record. Amounts are shown per currency and never summed across currencies.</div>
 
@@ -83,6 +83,7 @@
   {% for g in d.groups %}<tr><td>{{ g.chain }}</td><td>{{ g.rule }}</td><td>{{ g.currency }}</td><td class="num">{{ g.n }}</td><td class="num">{{ g.amt|money(g.currency) }}</td></tr>{% endfor %}
 </table>
 
+<div class="banner"><b>Case basis:</b> {{ d.case_basis }}</div>
 <h2>4. Unresolved exceptions ({{ d.open_cases|length }}) — overdue after {{ d.sla_days }} days: {{ d.overdue|length }}</h2>
 <table>
   <tr><th>Chain</th><th>Type</th><th>Currency</th><th class="num">Open</th><th class="num">Absolute exposure</th></tr>

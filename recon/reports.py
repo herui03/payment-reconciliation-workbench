@@ -53,10 +53,13 @@ def eod_data(conn: sqlite3.Connection, run_id: int | None = None) -> dict:
     as_of = date.fromisoformat(run["as_of"])
     rid = run["run_id"]
 
-    imports = [dict(r) for r in conn.execute("SELECT * FROM imports ORDER BY import_id")]
+    hw = run["max_import_id"]
+    imports = [dict(r) for r in conn.execute("SELECT * FROM imports WHERE import_id <= ? ORDER BY import_id", (hw,))]
+    later_imports = conn.execute("SELECT COUNT(*) FROM imports WHERE import_id > ?", (hw,)).fetchone()[0]
     ranges = {}
     for src, col in (("ledger", "event_date"), ("psp", "created_date"), ("bank", "value_date")):
-        r = conn.execute(f"SELECT COUNT(*) n, MIN({col}) lo, MAX({col}) hi FROM {src}_records").fetchone()
+        r = conn.execute(f"SELECT COUNT(*) n, MIN({col}) lo, MAX({col}) hi FROM {src}_records WHERE import_id <= ?",
+                         (hw,)).fetchone()
         ranges[src] = dict(r)
 
     # per-chain / per-currency status tables from record_status of this run
@@ -87,7 +90,27 @@ def eod_data(conn: sqlite3.Connection, run_id: int | None = None) -> dict:
         "SELECT chain, rule, currency, COUNT(*) n, SUM(left_total) amt FROM match_groups WHERE run_id=? "
         "GROUP BY 1,2,3 ORDER BY 1,2,3", (rid,))]
 
-    cases = [dict(r) for r in conn.execute("SELECT * FROM cases ORDER BY case_id")]
+    # Case basis. The LATEST run, when it is a workflow run and nothing was imported after it, shows live case
+    # workflow (so the EOD report reflects the analyst's work after the run). Any other run is reported strictly
+    # from its own persisted snapshot (run_exceptions), so later imports / runs / case actions cannot leak in.
+    latest_id = conn.execute("SELECT MAX(run_id) FROM runs WHERE finished_at IS NOT NULL").fetchone()[0]
+    live = rid == latest_id and run["case_sync"] == 1 and later_imports == 0
+    if live:
+        cases = [dict(r) for r in conn.execute("SELECT * FROM cases ORDER BY case_id")]
+        basis = "Live case workflow state at report generation (latest run, no later imports)."
+    else:
+        cases = []
+        for r in conn.execute("SELECT * FROM run_exceptions WHERE run_id=? ORDER BY case_key", (rid,)):
+            d = dict(r)
+            cases.append({"case_id": d["case_id"] or "—", "case_key": d["case_key"], "chain": d["chain"],
+                          "case_type": d["case_type"], "rule": d["rule"], "anchor_id": d["anchor_id"],
+                          "currency": d["currency"], "amount_minor": d["amount_minor"],
+                          "anchor_date": d["anchor_date"], "explanation": d["explanation"],
+                          "status": d["status_at_run"], "owner": d["owner_at_run"],
+                          "disposition": d["disposition_at_run"], "resolution_reason": "", "engine_active": 1})
+        basis = (f"Snapshot of run #{rid} at completion (historical report): only exceptions this run reported, "
+                 f"with case status as it was then. Later imports ({later_imports}), runs and case actions are "
+                 f"not reflected." + ("" if run["case_sync"] else " This run was a read-only backward as-of run."))
     for c in cases:
         c["age_days"] = age_days(c["anchor_date"], as_of)
         c["overdue"] = c["status"] != "Resolved" and c["age_days"] > SLA_DAYS
@@ -102,8 +125,8 @@ def eod_data(conn: sqlite3.Connection, run_id: int | None = None) -> dict:
         x["amount"] += abs(c["amount_minor"])
     dq = [dict(r) for r in conn.execute(
         "SELECT ri.*, i.file_name, i.sha256 FROM row_issues ri JOIN imports i USING(import_id) "
-        "WHERE ri.kind='QUARANTINED' ORDER BY ri.issue_id")]
-    dups = conn.execute("SELECT COUNT(*) FROM row_issues WHERE kind='DUPLICATE'").fetchone()[0]
+        "WHERE ri.kind='QUARANTINED' AND ri.import_id <= ? ORDER BY ri.issue_id", (hw,))]
+    dups = conn.execute("SELECT COUNT(*) FROM row_issues WHERE kind='DUPLICATE' AND import_id <= ?", (hw,)).fetchone()[0]
     rejected = [i for i in imports if i["status"] in ("REJECTED", "DUPLICATE_FILE")]
     return {
         "generated_at": utcnow(), "run": run, "as_of": run["as_of"], "rules_version": run["rules_version"],
@@ -114,7 +137,8 @@ def eod_data(conn: sqlite3.Connection, run_id: int | None = None) -> dict:
         "open_by": [{"chain": k[0], "case_type": k[1], "currency": k[2], **v} for k, v in sorted(open_by.items())],
         "dq": dq, "duplicate_rows": dups, "rejected_imports": rejected, "sla_days": SLA_DAYS,
         "excluded_after_as_of": summ.get("excluded_after_as_of", {}),
-        "all_cases_count": len(cases),
+        "all_cases_count": len(cases), "case_basis": basis, "live_cases": live, "later_imports": later_imports,
+        "case_sync": bool(run["case_sync"]),
     }
 
 
@@ -129,7 +153,8 @@ def _csv(rows: list[list]) -> str:
 def summary_csv(d: dict) -> str:
     rows = [["section", "chain", "source", "currency", "metric", "count", "amount"]]
     rows.append(["run", "", "", "", f"run_id={d['run']['run_id']} as_of={d['as_of']} rules={d['rules_version']} "
-                 f"elapsed_ms={d['run']['elapsed_ms']}", "", ""])
+                 f"elapsed_ms={d['run']['elapsed_ms']} case_sync={d['case_sync']}", "", ""])
+    rows.append(["case_basis", "", "", "", d["case_basis"], "", ""])
     for src, r in d["ranges"].items():
         rows.append(["input_range", "", src, "", f"{r['lo']}..{r['hi']}", r["n"], ""])
     for i in d["imports"]:
@@ -193,7 +218,7 @@ def write_eod(conn: sqlite3.Connection, out_dir: str | Path, run_id: int | None 
     d = eod_data(conn, run_id)
     out = Path(out_dir)
     out.mkdir(parents=True, exist_ok=True)
-    stem = f"eod_{d['as_of']}_run{d['run']['run_id']}"
+    stem = f"eod_{d['as_of']}_run{d['run']['run_id']}" + ("" if d["live_cases"] else "_snapshot")
     files = {
         "html": out / f"{stem}.html",
         "summary_csv": out / f"{stem}_summary.csv",

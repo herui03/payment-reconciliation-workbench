@@ -93,17 +93,38 @@ def test_auto_cleared_case_reopens_when_issue_reappears(conn):
     reconcile(conn, date(2026, 7, 8))                   # matched -> auto-cleared
     x = case(conn, c)
     assert (x["status"], x["disposition"], x["engine_active"]) == ("Resolved", "AUTO_CLEARED", 0)
-    # re-run as of 07-04: the 07-05 bank line is not yet visible and (with a 1-day window) the settlement is overdue,
-    # so the issue re-appears -> the system re-opens the auto-cleared case instead of creating a second one
-    from recon.matching import Rules
-    reconcile(conn, date(2026, 7, 4), rules=Rules(b_window_after=1))
+    # a later file re-sends bank line K1 with a different amount: K1 becomes a blocked conflict, so on the next
+    # (forward) run the settlement is unpaid again -> the system re-opens the SAME case
+    import_bytes(conn, "bank", csv_bytes(BANK_H, [bank(1, "9.60", "2026-07-05", ref="B1")]), "b2.csv")
+    reconcile(conn, date(2026, 7, 9))
     x = case(conn, c)
     assert (x["status"], x["engine_active"]) == ("Open", 1)
     acts = [r[0] for r in conn.execute("SELECT action FROM audit_events WHERE entity_type='case' AND entity_id=? "
                                        "ORDER BY event_id", (str(c),))]
     assert acts == ["CASE_OPENED", "NOTE_ADDED", "CASE_AUTO_CLEARED", "CASE_REOPENED"]
     assert conn.execute("SELECT COUNT(*) FROM case_notes WHERE case_id=?", (c,)).fetchone()[0] == 1
-    assert conn.execute("SELECT COUNT(*) FROM cases").fetchone()[0] == 1
+    assert conn.execute("SELECT COUNT(*) FROM cases WHERE case_key='B|STL|B1'").fetchone()[0] == 1
+
+
+# ---------------------------------------------------------------- reviewer finding R1 (defect D-08)
+@pytest.mark.parametrize("back_as_of", ["2026-06-30", "2026-07-02"])   # before the event / back inside grace
+def test_backward_as_of_run_is_read_only_for_cases(conn, back_as_of):
+    import_bytes(conn, "ledger", csv_bytes(LEDGER_H, [led(1, "REF1", "1000.00", "2026-07-01")]), "l.csv")
+    reconcile(conn, date(2026, 7, 10))
+    c = cid(conn, "A|M1|REF1")
+    assign(conn, c, "ops.lead", "a1")
+    add_note(conn, c, "chasing PSP", "a1")
+    set_status(conn, c, "In review", "a1")
+    before = case(conn, c)
+    n_events = conn.execute("SELECT COUNT(*) FROM audit_events WHERE entity_type='case'").fetchone()[0]
+    r = reconcile(conn, date.fromisoformat(back_as_of))
+    assert r["summary"]["case_sync"] is False and "read-only" in r["summary"]["case_sync_note"]
+    assert case(conn, c) == before                    # status, owner, disposition, engine fields untouched
+    assert conn.execute("SELECT COUNT(*) FROM audit_events WHERE entity_type='case'").fetchone()[0] == n_events
+    assert conn.execute("SELECT COUNT(*) FROM case_notes WHERE case_id=?", (c,)).fetchone()[0] == 1
+    # the next forward run syncs normally again (and still sees the open issue)
+    r = reconcile(conn, date(2026, 7, 11))
+    assert r["summary"]["case_sync"] is True and case(conn, c)["status"] == "In review"
 
 
 def test_audit_and_notes_are_append_only(sample):

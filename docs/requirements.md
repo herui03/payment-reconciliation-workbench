@@ -1,6 +1,6 @@
 # Requirements — Payment Reconciliation & Exception Management Workbench (v1)
 
-Status: v1 implemented on branch `claude/compassionate-allen-nkttlm`. See `STATUS.md` for what is verified.
+Status: v1 implemented on branch `claude/compassionate-allen-nkttlm` (not merged). See `STATUS.md` for what is verified.
 
 ## 1. Purpose and context
 A payment / finance-operations analyst needs to prove, every day, that
@@ -41,6 +41,7 @@ integrate with Stripe and does **not** accept its full report format.
 | ING-08 | A row whose record ID or business key already exists with **different** content is quarantined as a conflict; the key is blocked from auto-matching and raised as a `SOURCE_CONFLICT` exception. |
 | ING-09 | Supported currencies SGD, USD, EUR. No FX conversion. |
 | ING-10 | UI upload and "Load sample" both exist; UI states that only synthetic/demo data may be uploaded. |
+| ING-11 | Identifiers (record ids, business refs, merchant/bank accounts, batch ids) must be 1-64 chars of letters, digits and `. _ : # -`; otherwise `BAD_IDENTIFIER`. Business key = (merchant_account, business_ref), collision-safe encoding. Record ids are unique per source across all accounts. |
 
 ### 4.2 Reconciliation (REC)
 | ID | Requirement |
@@ -66,6 +67,7 @@ integrate with Stripe and does **not** accept its full report format.
 | EXC-04 | Manual resolution never creates a matched result and never changes amounts. |
 | EXC-05 | Every state change writes an audit event; no UI or API edits/deletes audit events or notes. |
 | EXC-06 | Re-running reconciliation keeps notes, owners, statuses and audit history, and never creates a duplicate unresolved case for the same subject. |
+| EXC-08 | A run whose as-of is earlier than the latest workflow run is a read-only historical snapshot: it never opens, clears, re-opens or edits cases, and the UI/CLI/API state this. |
 | EXC-07 | If late data causes a previously open case's subject to match, the case is auto-resolved with disposition `AUTO_CLEARED` by actor `system`, with an audit event; a manually resolved case stays resolved and gets an informational audit event. If an auto-cleared issue re-appears, the case is re-opened by `system`. |
 
 ### 4.4 Reporting (RPT)
@@ -74,6 +76,7 @@ integrate with Stripe and does **not** accept its full report format.
 | RPT-01 | EOD report in CSV and HTML: input data range and files, per-chain matched/unmatched counts, per-currency amounts, open exceptions, overdue items, data-quality errors, run time, rules version. |
 | RPT-02 | Financial summary kept per source and per chain; gross (chain A) and net (chain B) are shown separately with a gross → fee → net bridge, never summed together. |
 | RPT-03 | Runnable from a clean directory via README commands (CLI). |
+| RPT-04 | A report for a run is run-consistent: inputs limited to that run's imports; exceptions and case status from that run's persisted snapshot unless it is the latest workflow run with no later imports (then live case state). The report states its case basis. |
 
 ### 4.5 Evaluation (EVAL)
 | ID | Requirement |

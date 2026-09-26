@@ -121,8 +121,8 @@
         "B:UNEXPECTED_BANK_CREDIT": 5
       },
       "elapsed_s": {
-        "generate": 0.11,
-        "import": 0.19,
+        "generate": 0.08,
+        "import": 0.22,
         "reconcile_total": 0.19,
         "engine_only": 0.11
       }
@@ -242,10 +242,10 @@
         "B:UNEXPECTED_BANK_CREDIT": 10
       },
       "elapsed_s": {
-        "generate": 0.06,
-        "import": 0.18,
-        "reconcile_total": 0.19,
-        "engine_only": 0.1
+        "generate": 0.07,
+        "import": 0.22,
+        "reconcile_total": 0.2,
+        "engine_only": 0.11
       }
     },
     {
@@ -363,10 +363,10 @@
         "B:UNEXPECTED_BANK_CREDIT": 16
       },
       "elapsed_s": {
-        "generate": 0.06,
-        "import": 0.19,
-        "reconcile_total": 0.19,
-        "engine_only": 0.1
+        "generate": 0.1,
+        "import": 0.23,
+        "reconcile_total": 0.26,
+        "engine_only": 0.15
       }
     },
     {
@@ -487,9 +487,9 @@
       },
       "elapsed_s": {
         "generate": 0.09,
-        "import": 0.24,
-        "reconcile_total": 1.02,
-        "engine_only": 0.82
+        "import": 0.26,
+        "reconcile_total": 1.0,
+        "engine_only": 0.81
       }
     },
     {
@@ -607,9 +607,9 @@
         "B:UNEXPECTED_BANK_CREDIT": 5
       },
       "elapsed_s": {
-        "generate": 0.72,
-        "import": 1.94,
-        "reconcile_total": 2.06,
+        "generate": 0.71,
+        "import": 2.13,
+        "reconcile_total": 1.98,
         "engine_only": 1.11
       }
     }

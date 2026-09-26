@@ -119,6 +119,8 @@ def create_app(db_path: str | Path, reports_dir: str | Path | None = None) -> Fl
         flash(f"Run #{r['run_id']} as-of {as_of}: {s['counts']['groups']} match groups, "
               f"{s['counts']['exceptions']} exceptions reported. Cases: {ch['opened']} opened, "
               f"{ch['auto_cleared']} auto-cleared, {ch['reopened']} re-opened, {ch['updated']} updated.", "ok")
+        if not s["case_sync"]:
+            flash(s["case_sync_note"] + " Re-run with the current as-of to return to the working view.", "warn")
         return redirect(url_for("dashboard"))
 
     @app.get("/exceptions")
@@ -245,6 +247,9 @@ def create_app(db_path: str | Path, reports_dir: str | Path | None = None) -> Fl
         d = eod_data(db(), run["run_id"])
         return jsonify({"run_id": run["run_id"], "as_of": run["as_of"], "rules_version": run["rules_version"],
                         "chain_a": d["chain_a"], "chain_b": d["chain_b"], "open_cases": len(d["open_cases"]),
+                        "case_basis": d["case_basis"], "case_sync": d["case_sync"],
+                        "workflow_open_cases": db().execute(
+                            "SELECT COUNT(*) FROM cases WHERE status != 'Resolved'").fetchone()[0],
                         "overdue": len(d["overdue"]), "bridge": d["bridge"]})
 
     return app

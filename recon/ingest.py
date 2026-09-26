@@ -15,6 +15,7 @@ import csv
 import hashlib
 import io
 import json
+import re
 import sqlite3
 from dataclasses import dataclass, field
 from datetime import date
@@ -35,6 +36,12 @@ REQUIRED_COLUMNS = {
 }
 OPTIONAL_COLUMNS = {"ledger": ["description"], "psp": [], "bank": ["description"]}
 TABLE = {"ledger": "ledger_records", "psp": "psp_records", "bank": "bank_records"}
+
+
+# Identifier syntax (record ids, business refs, merchant / bank accounts, batch ids): 1-64 chars, letters, digits
+# and . _ : # - only. Reserved characters such as | , ; / and whitespace are rejected so that identifiers can
+# never collide inside composite keys (e.g. case keys "A|merchant|ref") or be split by bank-reference tokenising.
+IDENT_RE = re.compile(r"[A-Za-z0-9][A-Za-z0-9._:#-]{0,63}")
 
 
 class RowError(Exception):
@@ -70,6 +77,18 @@ def _req(row: dict, col: str) -> str:
     v = (row.get(col) or "").strip()
     if not v:
         raise RowError("MISSING_VALUE", f"required value '{col}' is blank")
+    return v
+
+
+def _ident(row: dict, col: str, required: bool = True) -> str:
+    v = (row.get(col) or "").strip()
+    if not v:
+        if required:
+            raise RowError("MISSING_VALUE", f"required value '{col}' is blank")
+        return ""
+    if not IDENT_RE.fullmatch(v):
+        raise RowError("BAD_IDENTIFIER", f"'{col}'={v[:40]!r} must be 1-64 chars of letters, digits and . _ : # - "
+                                         f"(no spaces or | , ; /)")
     return v
 
 
@@ -111,12 +130,12 @@ def parse_ledger(row: dict) -> dict:
         raise RowError("SIGN_RULE", "SALE gross_amount must be > 0")
     if et == "REFUND" and gross >= 0:
         raise RowError("SIGN_RULE", "REFUND gross_amount must be < 0")
-    original = (row.get("original_ref") or "").strip()
+    original = _ident(row, "original_ref", required=False)
     if et == "REFUND" and not original:
         raise RowError("MISSING_VALUE", "REFUND requires original_ref")
     return {
-        "record_id": _req(row, "ledger_entry_id"), "event_type": et, "business_ref": _req(row, "business_ref"),
-        "original_ref": original, "merchant_account": _req(row, "merchant_account"), "currency": cur,
+        "record_id": _ident(row, "ledger_entry_id"), "event_type": et, "business_ref": _ident(row, "business_ref"),
+        "original_ref": original, "merchant_account": _ident(row, "merchant_account"), "currency": cur,
         "gross_minor": gross, "event_date": _date(row, "event_date"),
         "description": (row.get("description") or "").strip(),
     }
@@ -138,19 +157,19 @@ def parse_psp(row: dict) -> dict:
         raise RowError("SIGN_RULE", "refund gross_amount must be < 0")
     if typ == "fee" and gross != 0:
         raise RowError("SIGN_RULE", "fee rows must have gross_amount 0")
-    bref = (row.get("business_ref") or "").strip()
+    bref = _ident(row, "business_ref", required=False)
     if typ in ("charge", "refund") and not bref:
         raise RowError("MISSING_VALUE", f"{typ} requires business_ref")
-    batch = (row.get("settlement_batch_id") or "").strip()
+    batch = _ident(row, "settlement_batch_id", required=False)
     sdate = _date(row, "settlement_date", required=False)
-    bank_acct = (row.get("bank_account") or "").strip()
+    bank_acct = _ident(row, "bank_account", required=False)
     if batch and (not sdate or not bank_acct):
         raise RowError("MISSING_VALUE", "settled item requires settlement_date and bank_account")
     if not batch and sdate:
         raise RowError("BAD_VALUE", "settlement_date given without settlement_batch_id")
     return {
-        "record_id": _req(row, "psp_txn_id"), "type": typ, "business_ref": bref,
-        "merchant_account": _req(row, "merchant_account"), "currency": cur,
+        "record_id": _ident(row, "psp_txn_id"), "type": typ, "business_ref": bref,
+        "merchant_account": _ident(row, "merchant_account"), "currency": cur,
         "gross_minor": gross, "fee_minor": fee, "net_minor": net,
         "created_date": _date(row, "created_date"), "available_on": _date(row, "available_on"),
         "settlement_batch_id": batch, "settlement_date": sdate, "bank_account": bank_acct,
@@ -163,7 +182,7 @@ def parse_bank(row: dict) -> dict:
     if amt == 0:
         raise RowError("BAD_AMOUNT", "bank amount must be non-zero")
     return {
-        "record_id": _req(row, "bank_txn_id"), "bank_account": _req(row, "bank_account"), "currency": cur,
+        "record_id": _ident(row, "bank_txn_id"), "bank_account": _ident(row, "bank_account"), "currency": cur,
         "amount_minor": amt, "value_date": _date(row, "value_date"),
         "reference": (row.get("reference") or "").strip(), "description": (row.get("description") or "").strip(),
     }
@@ -176,7 +195,8 @@ def business_key(source: str, rec: dict) -> str:
     """Business key scope: (merchant_account, business_ref). The same business_ref under two different merchants
     is two different business events and is never merged. Bank lines have no business key (record id only)."""
     if source == "ledger" or (source == "psp" and rec["type"] in ("charge", "refund")):
-        return f"{rec['merchant_account']}|{rec['business_ref']}"
+        # JSON tuple encoding: collision-safe even if identifier rules were ever relaxed.
+        return json.dumps([rec["merchant_account"], rec["business_ref"]], separators=(",", ":"))
     return ""
 
 
@@ -287,7 +307,7 @@ def import_bytes(conn: sqlite3.Connection, source: str, data: bytes, file_name: 
                     continue
                 if bk and bk in by_bkey:
                     _issue(conn, res, i, "QUARANTINED", "CONFLICT_BUSINESS_KEY",
-                           f"merchant|business_ref {bk} already used by record {by_bkey[bk]}", raw_clean,
+                           f"(merchant, business_ref) {bk} already used by record {by_bkey[bk]}", raw_clean,
                            record_id=rid, bkey=bk, conflicts_with=by_bkey[bk])
                     continue
                 cols = list(rec) + ["content_hash", "import_id", "source_row"]

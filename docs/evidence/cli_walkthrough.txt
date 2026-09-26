@@ -1,0 +1,59 @@
+== 1. import sample
+ledger PARTIAL PARTIAL: read 35, loaded 30, duplicate 1, quarantined 4
+psp PARTIAL PARTIAL: read 30, loaded 29, duplicate 0, quarantined 1
+bank PARTIAL PARTIAL: read 19, loaded 17, duplicate 1, quarantined 1
+== 2. duplicate / renamed / bad-schema / overlap files
+DUPLICATE_FILE identical content already imported as import #1 (ledger: ledger.csv); nothing loaded
+DUPLICATE_FILE identical content already imported as import #1 (ledger: ledger.csv); nothing loaded
+REJECTED missing required column(s) for bank: amount; whole file rejected
+LOADED read 2, loaded 1, duplicate 1, quarantined 0
+== 3. reconcile as-of 2026-07-10
+run 1 groups 29 exceptions 20 changes {'opened': 20, 'updated': 0, 'auto_cleared': 0, 'reopened': 0, 'cleared_after_manual': 0, 'reappeared_after_manual': 0}
+   4 Open       A DATE_OUT_OF_TOLERANCE    SGD        13000 MER-SG-01|ORD-1016           owner=- notes=0
+   8 Open       A AMOUNT_MISMATCH          USD         5000 MER-US-01|ORD-1002           owner=- notes=0
+   9 Open       A MISSING_IN_LEDGER        USD        -8000 MER-US-01|ORD-1022           owner=- notes=0
+   3 Open       A MISSING_IN_LEDGER        SGD        -6400 MER-SG-01|ORD-1011           owner=- notes=0
+   5 Open       A MISSING_IN_PSP           SGD         6000 MER-SG-01|ORD-1021           owner=- notes=0
+  12 Open       B UNSETTLED_OVERDUE        SGD         6272 PSP-1011                     owner=- notes=0
+  19 Open       B DATE_OUT_OF_WINDOW       USD        19400 STL-US-0703                  owner=- notes=0
+   6 Open       A ACCOUNT_MISMATCH         SGD         5000 MER-SG-01|ORD-1032           owner=- notes=0
+   7 Open       A ACCOUNT_MISMATCH         SGD        -5000 MER-SG-02|ORD-1032           owner=- notes=0
+  20 Open       B MISSING_IN_BANK          USD         9700 STL-US-0704                  owner=- notes=0
+  13 Open       B PARTIAL_RECEIPT          EUR        80000 STL-EU-0705                  owner=- notes=0
+   2 Open       A SOURCE_CONFLICT          SGD        75000 MER-SG-01|ORD-1010           owner=- notes=0
+  14 Open       B SUGGESTED_GROUP          EUR         9800 STL-EU-0706A                 owner=- notes=0
+  15 Open       B SUGGESTED_GROUP          EUR        19600 STL-EU-0706B                 owner=- notes=0
+   1 Open       A CURRENCY_MISMATCH        EUR        30000 MER-EU-01|ORD-1013           owner=- notes=0
+  16 Open       B AMBIGUOUS_CANDIDATES     EUR        49000 STL-EU-0707A                 owner=- notes=0
+  17 Open       B AMBIGUOUS_CANDIDATES     EUR        49000 STL-EU-0707B                 owner=- notes=0
+  18 Open       B ACCOUNT_MISMATCH         SGD        19600 STL-SG-0707                  owner=- notes=0
+  10 Open       B UNEXPECTED_BANK_CREDIT   SGD         5555 B-015                        owner=- notes=0
+  11 Open       B SOURCE_CONFLICT          SGD         2000 B-018                        owner=- notes=0
+== 4. analyst works cases
+case 13 owner=ops.analyst
+1
+case 13 -> In review 
+error: resolving requires a disposition from the list
+(expected refusal above: disposition + reason required)
+case 10 -> Resolved NO_ACTION_REQUIRED
+== 5. late bank file + re-run as-of 2026-07-11
+LOADED read 3, loaded 3, duplicate 0, quarantined 0
+run 2 groups 32 exceptions 18 changes {'opened': 0, 'updated': 0, 'auto_cleared': 2, 'reopened': 0, 'cleared_after_manual': 0, 'reappeared_after_manual': 0}
+  20 Resolved   B MISSING_IN_BANK          USD         9700 STL-US-0704                  owner=- notes=0
+  13 Resolved   B PARTIAL_RECEIPT          EUR        80000 STL-EU-0705                  owner=ops.analyst notes=1
+  10 Resolved   B UNEXPECTED_BANK_CREDIT   SGD         5555 B-015                        owner=- notes=0
+== 6. re-run same data (idempotency)
+run 3 changes {'opened': 0, 'updated': 0, 'auto_cleared': 0, 'reopened': 0, 'cleared_after_manual': 0, 'reappeared_after_manual': 0}
+{
+  "html": "docs/evidence/sample_reports/eod_2026-07-11_run3.html",
+  "summary_csv": "docs/evidence/sample_reports/eod_2026-07-11_run3_summary.csv",
+  "exceptions_csv": "docs/evidence/sample_reports/eod_2026-07-11_run3_exceptions.csv",
+  "data_quality_csv": "docs/evidence/sample_reports/eod_2026-07-11_run3_data_quality.csv"
+}
+== 7. audit trail for the partial-receipt case
+2026-09-26T04:36:24.077735Z system CASE_OPENED
+2026-09-26T04:36:24.532275Z analyst.a CASE_ASSIGNED
+2026-09-26T04:36:24.631112Z analyst.a NOTE_ADDED
+2026-09-26T04:36:24.720776Z analyst.a CASE_STATUS_CHANGED
+2026-09-26T04:36:25.184209Z system CASE_AUTO_CLEARED
+UPDATE audit_events -> audit_events is append-only

@@ -31,7 +31,8 @@ def _d(s: str) -> date | None:
     return date.fromisoformat(s) if s else None
 
 
-def load_input(conn: sqlite3.Connection, as_of: date, rules: Rules | None = None) -> EngineInput:
+def load_input(conn: sqlite3.Connection, as_of: date, rules: Rules | None = None,
+               max_import_id: int | None = None) -> EngineInput:
     """Load records as known on ``as_of``.
 
     As-of cutoff (point-in-time by business date): ledger rows with event_date > as_of, PSP items with
@@ -40,16 +41,17 @@ def load_input(conn: sqlite3.Connection, as_of: date, rules: Rules | None = None
     settled. The cutoff uses business dates only; the tool does not track when a row was physically received.
     """
     iso = as_of.isoformat()
+    hw = max_import_id if max_import_id is not None else 1 << 62
     excluded = {"ledger": 0, "psp": 0, "bank": 0, "psp_settlement_after_as_of": 0}
     ledger = []
-    for r in conn.execute("SELECT * FROM ledger_records"):
+    for r in conn.execute("SELECT * FROM ledger_records WHERE import_id <= ?", (hw,)):
         if r["event_date"] > iso:
             excluded["ledger"] += 1
             continue
         ledger.append(Ledger(r["record_id"], r["event_type"], r["business_ref"], r["merchant_account"],
                              r["currency"], r["gross_minor"], _d(r["event_date"])))
     psp = []
-    for r in conn.execute("SELECT * FROM psp_records"):
+    for r in conn.execute("SELECT * FROM psp_records WHERE import_id <= ?", (hw,)):
         if r["created_date"] > iso:
             excluded["psp"] += 1
             continue
@@ -61,17 +63,19 @@ def load_input(conn: sqlite3.Connection, as_of: date, rules: Rules | None = None
                            r["gross_minor"], r["fee_minor"], r["net_minor"], _d(r["created_date"]),
                            _d(r["available_on"]), batch, sdate, acct))
     bank = []
-    for r in conn.execute("SELECT * FROM bank_records"):
+    for r in conn.execute("SELECT * FROM bank_records WHERE import_id <= ?", (hw,)):
         if r["value_date"] > iso:
             excluded["bank"] += 1
             continue
         bank.append(BankLine(r["record_id"], r["bank_account"], r["currency"], r["amount_minor"],
                              _d(r["value_date"]), r["reference"]))
-    blocked = {src: {rid: [row["issue_id"] for row in rows] for rid, rows in m.items()}
+    blocked = {src: {rid: [row["issue_id"] for row in rows if row["import_id"] <= hw] for rid, rows in m.items()}
                for src, m in blocked_keys(conn).items()}
+    blocked = {src: {rid: ids for rid, ids in m.items() if ids} for src, m in blocked.items()}
     hints: dict[tuple[str, str], list[str]] = defaultdict(list)
     for r in conn.execute("SELECT ri.*, i.sha256 FROM row_issues ri JOIN imports i USING(import_id) "
-                          "WHERE ri.kind='QUARANTINED' AND ri.reason_code NOT LIKE 'CONFLICT%' ORDER BY issue_id"):
+                          "WHERE ri.kind='QUARANTINED' AND ri.reason_code NOT LIKE 'CONFLICT%' AND ri.import_id <= ? "
+                          "ORDER BY issue_id", (hw,)):
         raw = json.loads(r["raw_json"])
         bref = (raw.get("business_ref") or "").strip()
         mer = (raw.get("merchant_account") or "").strip()
@@ -92,14 +96,21 @@ def reconcile(conn: sqlite3.Connection, as_of: date, actor: str = "demo.analyst"
               rules: Rules | None = None) -> dict:
     t0 = time.perf_counter()
     started = utcnow()
-    inp = load_input(conn, as_of, rules)
+    max_import = conn.execute("SELECT COALESCE(MAX(import_id), 0) FROM imports").fetchone()[0]
+    inp = load_input(conn, as_of, rules, max_import)
     res = run_engine(inp)
     engine_ms = int((time.perf_counter() - t0) * 1000)
     summary = build_summary(inp, res)
     with tx(conn):
+        # Policy: only a run whose as-of is on/after the latest workflow-synced run may change cases. A run
+        # "looking back" (earlier as-of) is persisted as a read-only historical snapshot: it never opens, clears,
+        # re-opens or edits cases, so browsing the past cannot close today's operational items.
+        prev = conn.execute("SELECT MAX(as_of) FROM runs WHERE case_sync=1 AND finished_at IS NOT NULL").fetchone()[0]
+        case_sync = prev is None or as_of.isoformat() >= prev
         run_id = conn.execute(
-            "INSERT INTO runs(started_at, as_of, rules_version, actor, input_fingerprint) VALUES (?,?,?,?,?)",
-            (started, as_of.isoformat(), RULES_VERSION, actor, input_fingerprint(conn)),
+            "INSERT INTO runs(started_at, as_of, rules_version, actor, input_fingerprint, max_import_id, case_sync) "
+            "VALUES (?,?,?,?,?,?,?)",
+            (started, as_of.isoformat(), RULES_VERSION, actor, input_fingerprint(conn), max_import, int(case_sync)),
         ).lastrowid
         conn.executemany(
             "INSERT INTO match_groups(run_id, group_id, chain, rule, currency, left_total, right_total, explanation) "
@@ -116,20 +127,43 @@ def reconcile(conn: sqlite3.Connection, as_of: date, actor: str = "demo.analyst"
             "currency, amount_minor, detail) VALUES (?,?,?,?,?,?,?,?,?,?,?)",
             [(run_id, s.chain, s.record_type, s.record_id, s.status, s.rule, s.group_id, s.case_key, s.currency,
               s.amount, s.detail) for s in res.states])
-        changes = sync_cases(conn, res, run_id, inp)
+        if case_sync:
+            changes = sync_cases(conn, res, run_id, inp)
+        else:
+            changes = {"opened": 0, "updated": 0, "auto_cleared": 0, "reopened": 0, "cleared_after_manual": 0,
+                       "reappeared_after_manual": 0}
         summary["case_changes"] = changes
+        summary["case_sync"] = case_sync
+        summary["case_sync_note"] = ("" if case_sync else
+                                     f"Historical run: as-of {as_of} is before the latest workflow run as-of {prev}; "
+                                     f"read-only snapshot, cases were not changed.")
+        _snapshot_exceptions(conn, res, run_id)
         summary["rules"] = inp.rules.as_dict()
         elapsed = int((time.perf_counter() - t0) * 1000)
         summary["engine_ms"] = engine_ms
         conn.execute("UPDATE runs SET finished_at=?, elapsed_ms=?, summary_json=? WHERE run_id=?",
                      (utcnow(), elapsed, json.dumps(summary, sort_keys=True), run_id))
         audit(conn, actor, "run", str(run_id), "RUN_COMPLETED",
-              json.dumps({"as_of": as_of.isoformat(), "rules_version": RULES_VERSION, "groups": len(res.groups),
+              json.dumps({"as_of": as_of.isoformat(), "rules_version": RULES_VERSION, "case_sync": case_sync,
+                          "groups": len(res.groups),
                           "exceptions": len(res.exceptions), "case_changes": changes}), run_id)
     return {"run_id": run_id, "summary": summary, "elapsed_ms": elapsed}
 
 
 # ---------------------------------------------------------------- cases
+
+def _snapshot_exceptions(conn: sqlite3.Connection, res: EngineResult, run_id: int) -> None:
+    """Persist what this run reported plus the case workflow state at run completion (run-consistent history)."""
+    cases = {r["case_key"]: r for r in conn.execute("SELECT case_key, case_id, status, owner, disposition FROM cases")}
+    rows = []
+    for e in res.exceptions:
+        c = cases.get(e.case_key)
+        rows.append((run_id, e.case_key, c["case_id"] if c else None, e.chain, e.case_type, e.rule, e.anchor_id,
+                     e.currency, e.amount, e.anchor_date.isoformat(), e.explanation,
+                     c["status"] if c else "Not tracked (historical run)", c["owner"] if c else "",
+                     c["disposition"] if c else ""))
+    conn.executemany("INSERT INTO run_exceptions VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)", rows)
+
 
 def _anchor_state(res: EngineResult, key: str, a_subjects: dict[str, list[tuple[str, str]]]) -> str:
     idx = {(s.chain, s.record_type, s.record_id): s for s in res.states}

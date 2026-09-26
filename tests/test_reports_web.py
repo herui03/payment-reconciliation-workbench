@@ -124,3 +124,37 @@ def test_web_upload_partial_and_rejected_are_not_shown_as_success(client):
     r = client.post("/upload", data={"source": "ledger", "strict": "1", "file": (BytesIO(data.replace(b"O1", b"Z1")), "s.csv")},
                     content_type="multipart/form-data", follow_redirects=True).get_data(as_text=True)
     assert "s.csv: REJECTED" in r and "rolled back" in r
+
+
+# ---------------------------------------------------------------- reviewer finding R3 (defect D-10)
+def test_historical_report_is_run_consistent(conn):
+    from helpers import PSP_H, psp
+
+    from recon.cases import set_status
+    import_bytes(conn, "ledger", csv_bytes(LEDGER_H, [led(1, "REF1", "1000.00", "2026-07-01")]), "l.csv")
+    run1 = reconcile(conn, date(2026, 7, 10))["run_id"]
+    d1_before = eod_data(conn, run1)
+    assert d1_before["live_cases"] and [c["case_key"] for c in d1_before["open_cases"]] == ["A|M1|REF1"]
+    import_bytes(conn, "psp", csv_bytes(PSP_H, [psp(1, "REF1", "1000.00", "20.00", "2026-07-01", batch="S1",
+                                                    sdate="2026-07-03", acct="BANK1")]), "p.csv")
+    run2 = reconcile(conn, date(2026, 7, 10))["run_id"]
+    c_stl = conn.execute("SELECT case_id FROM cases WHERE case_key='B|STL|S1'").fetchone()[0]
+    set_status(conn, c_stl, "In review", "a1")                         # later manual action
+    d1 = eod_data(conn, run1)
+    assert not d1["live_cases"] and "Snapshot of run #1" in d1["case_basis"]
+    assert [(c["case_key"], c["status"]) for c in d1["open_cases"]] == [("A|M1|REF1", "Open")]
+    assert [i["file_name"] for i in d1["imports"]] == ["l.csv"] and d1["later_imports"] == 1
+    assert d1["ranges"]["psp"]["n"] == 0
+    assert "Historical run report (snapshot)" in render_html(d1)
+    d2 = eod_data(conn, run2)
+    assert d2["live_cases"] and [(c["case_key"], c["status"]) for c in d2["open_cases"]] == [("B|STL|S1", "In review")]
+
+
+def test_web_backward_run_warns_and_keeps_cases(client):
+    client.post("/load-sample")
+    client.post("/reconcile", data={"as_of": "2026-07-10"})
+    r = client.post("/reconcile", data={"as_of": "2026-07-01"}, follow_redirects=True).get_data(as_text=True)
+    assert "read-only snapshot, cases were not changed" in r and "snapshot-banner" in r
+    j = client.get("/api/summary").get_json()
+    assert j["case_sync"] is False and j["open_cases"] == 1          # what the 07-01 snapshot run reported
+    assert j["workflow_open_cases"] == 20                             # live cases untouched

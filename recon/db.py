@@ -102,7 +102,28 @@ CREATE TABLE IF NOT EXISTS runs (
     actor           TEXT NOT NULL,
     input_fingerprint TEXT NOT NULL DEFAULT '',
     elapsed_ms      INTEGER,
+    max_import_id   INTEGER NOT NULL DEFAULT 0,  -- inputs visible to this run: imports with import_id <= this
+    case_sync       INTEGER NOT NULL DEFAULT 1,  -- 0 = historical (backward as-of) run: read-only snapshot
     summary_json    TEXT NOT NULL DEFAULT '{}'
+);
+
+-- Exceptions reported by each run, with the case workflow state captured when the run completed.
+CREATE TABLE IF NOT EXISTS run_exceptions (
+    run_id        INTEGER NOT NULL REFERENCES runs(run_id),
+    case_key      TEXT NOT NULL,
+    case_id       INTEGER,
+    chain         TEXT NOT NULL,
+    case_type     TEXT NOT NULL,
+    rule          TEXT NOT NULL,
+    anchor_id     TEXT NOT NULL,
+    currency      TEXT NOT NULL,
+    amount_minor  INTEGER NOT NULL,
+    anchor_date   TEXT NOT NULL,
+    explanation   TEXT NOT NULL,
+    status_at_run TEXT NOT NULL,
+    owner_at_run  TEXT NOT NULL DEFAULT '',
+    disposition_at_run TEXT NOT NULL DEFAULT '',
+    PRIMARY KEY (run_id, case_key)
 );
 
 CREATE TABLE IF NOT EXISTS match_groups (
@@ -190,7 +211,7 @@ CREATE TABLE IF NOT EXISTS audit_events (
 
 APPEND_ONLY_TABLES = (
     "ledger_records", "psp_records", "bank_records", "row_issues",
-    "match_groups", "match_members", "record_status", "case_notes", "audit_events",
+    "match_groups", "match_members", "record_status", "run_exceptions", "case_notes", "audit_events",
 )
 
 
