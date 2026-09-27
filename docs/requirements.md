@@ -1,6 +1,6 @@
 # Requirements — Payment Reconciliation & Exception Management Workbench (v1)
 
-Status: v1 implemented on branch `claude/compassionate-allen-nkttlm` (not merged). See `STATUS.md` for what is verified.
+Status: v1 implemented and merged to `main` (PR #1). See `STATUS.md` for what is verified.
 
 ## 1. Purpose and context
 A payment / finance-operations analyst needs to prove, every day, that

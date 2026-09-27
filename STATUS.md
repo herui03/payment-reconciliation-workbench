@@ -1,4 +1,4 @@
-# STATUS — v1 (branch `claude/compassionate-allen-nkttlm`, not merged)
+# STATUS — v1 (merged to `main` via PR #1)
 
 Last updated 2026-09-26. Everything below was actually run in this environment (Linux, Python 3.11.15, SQLite, Chromium 1194 via Playwright 1.63).
 
