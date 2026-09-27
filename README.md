@@ -1,9 +1,11 @@
 # Payment Reconciliation & Exception Management Workbench
 
+**New here? Start with the plain-English [HR / hiring-manager overview](docs/HR_OVERVIEW.md)** — problem, a normal and a failure flow, 3-minute demo, screenshots, evidence and limitations.
+
 A local, offline workbench for payment / finance-operations analysts: import ledger, PSP and bank CSVs, reconcile
 **two chains independently**, work the exceptions with an audit trail, and publish an end-of-day report.
 
-> **Portfolio prototype on synthetic data.** Independent project by Herui. All data is invented. It is not an
+> **Portfolio prototype on synthetic data.** Portfolio project directed by Herui; implemented by Claude (AI coding assistant) and reviewed by Codex — see [attribution](docs/HR_OVERVIEW.md#how-it-was-built-attribution). All data is invented. It is not an
 > employer system, contains no employer material, does not connect to any bank or PSP, needs no API key, and its
 > results are not production accuracy. Single-user local demo: the "actor" is a demo label, not authentication;
 > the audit log is append-only inside the app but is not tamper-proof or regulatory-grade; there is no formal
