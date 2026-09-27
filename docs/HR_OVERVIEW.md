@@ -10,9 +10,9 @@ tracked, explainable work item.
 ## How it was built (attribution)
 | Role | Who |
 |---|---|
-| Problem choice, requirements, scope and constraints, acceptance criteria, review decisions | **Herui** (project owner, directed the work) |
-| Implementation: code, tests, sample data, documentation drafts | **Claude** (Anthropic's AI coding assistant), working from Herui's instructions |
-| Independent review (found 3 real defects, since fixed — see [defects D-08…D-10](defects.md)) | **Codex** (AI reviewer) |
+| Project direction and intended use: chose the job-portfolio goal and priorities, authorized the work | **Herui** (project owner) |
+| Implementation: code, tests, sample data, documentation | **Claude** (Anthropic's AI coding assistant) |
+| Scope translation into requirements, review criteria and cases, independent review and implementation-review decisions (found defects [D-08…D-10](defects.md)) | **Codex** (AI reviewer) |
 
 The code was not hand-written by Herui. Herui's own understanding of the rules and trade-offs is something to be
 demonstrated in conversation — for example by walking through the demo below or the
